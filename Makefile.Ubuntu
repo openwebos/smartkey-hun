@@ -1,0 +1,24 @@
+BUILD_TYPE ?= debug
+TARGET_ARCH := x86
+PLATFORM   := x86
+
+NOVA_TOP_DIR_REL = ../
+NOVA_TOP_DIR_ABS = $(shell cd $(NOVA_TOP_DIR_REL); pwd)
+
+INSTALL_DIR ?= $(LUNA_STAGING)
+INCLUDE_DIR ?= $(LUNA_STAGING)/include
+LIB_DIR ?= $(LUNA_STAGING)/lib
+
+INCLUDES := $(INCLUDES) \
+	-I$(INCLUDE_DIR)
+
+LIBS := \
+	-L$(LUNA_STAGING)/lib -lmjson -llunaservice
+
+FLAGS_OPT += -DTARGET_DESKTOP
+
+include Makefile.inc
+
+.PHONY: docs
+docs:
+	doxygen Doxyfile

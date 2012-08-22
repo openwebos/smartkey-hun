@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.palm.smartKey
+Exec=/usr/bin/com.palm.smartkey
+Type=static
+

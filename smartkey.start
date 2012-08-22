@@ -1,0 +1,27 @@
+# com.palm.smartkey
+# Copy me into /etc/event.d
+
+start on stopped fontconfig_cache
+
+# Stop when the Software Update tool is about to install an update. The tool
+# uses upstart to restart jobs when the installation is complete.
+stop on started start_update
+
+description "Spell check Daemon"
+
+#start on started PmNetConfigManager
+
+script
+    if grep -qs "qemux86" /etc/hostname ; then
+      # export added for qemux86
+      export HOME=/var/home/root
+    fi
+    if [ -d /dev/cgroup ] ; then
+        mkdir -p /dev/cgroup/web                          
+        echo $$ > /dev/cgroup/web/tasks
+    fi
+    exec /usr/bin/com.palm.smartkey
+end script
+
+respawn
+respawn limit 0 0

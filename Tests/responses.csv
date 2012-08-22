@@ -1,0 +1,73 @@
+Word,spelledCorrectly,topGuess,autoReplace,autoCorrect
+
+# Default for desktop should be en_us, but let's be sure.
+setLocale,en_us
+
+# Empty guess
+,true,<exception>,false,false
+
+# Punctuation only
+.,true,<exception>,false,false
+!!!!!,true,<exception>,false,false
+
+# spelled correctly
+Hello,true,,false,false
+I,true,,false,false
+I'll,true,,false,false
+I'm,true,,false,false
+i'll,true,,false,false
+can't,true,,false,false
+
+# auto-corrected words
+teh,false,the,false,true
+onne,false,one,false,true
+Cant,false,Can't,false,true
+
+# Short ASDB entries
+im,true,I'm,true,false
+i,true,I,true,false
+
+# Words that should not be auto-corrected (no guess)
+xyxyxyx,false,xyxyxyx,false,false
+
+# Numbers
+1234,true,,false,false
+90.0,true,,false,false
+
+# URL's, etc.
+user@gmail.com,true,,false,false
+http://www.cnn.com,true,,false,false
+www.cnn.com,true,,false,false
+cnn.com,true,,false,false
+to:,true,,false,false
+
+# Auto-replace entries
+u,true,you,true,false
+
+# Swear words
+fuck,true,fuck,false,false
+
+# abbreviations
+i.e.,true,,false,false
+
+# Now with punctuation
+onne.,false,one.,false,true
+onne',false,one',false,true
+onne?,false,one?,false,true
+onne!,false,one!,false,true
+u.,true,you.,true,false
+'onne',false,'one',false,true
+"onne",false,"one",false,true
+“onne”,false,“one”,false,true
+onne""",false,one""",false,true
+""onne""",false,""one""",false,true
+
+# Test 
+setLocale,en_us
+Defdnce,false,Defense,false,true
+
+setLocale,en_gb
+Defdnce,false,Defence,false,false
+
+setLocale,en_ca
+Defdnce,false,Defence,false,false
