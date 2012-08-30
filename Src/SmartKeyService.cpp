@@ -214,6 +214,27 @@ namespace SmartKey
 {
 
 // methods exposed via service
+/*! \page com_palm_smartkey_service com.palm.smartKey service API
+ *
+ *  Methods:
+ *   - \ref com_palm_smartkey_search 
+ *   - \ref com_palm_smartkey_learn
+ *   - \ref com_palm_smartkey_addUserWord
+ *   - \ref com_palm_smartkey_forget
+ *   - \ref com_palm_smartkey_removeUserWord
+ *   - \ref com_palm_smartkey_numUserWords
+ *   - \ref com_palm_smartkey_listUserWords
+ *   - \ref com_palm_smartkey_addAutoReplace
+ *   - \ref com_palm_smartkey_removeAutoReplace
+ *   - \ref com_palm_smartkey_listAutoReplace
+ *   - \ref com_palm_smartkey_numAutoReplace
+ *   - \ref com_palm_smartkey_addPerson
+ *   - \ref com_palm_smartkey_removePerson
+ *   - \ref com_palm_smartkey_exit
+ *   - \ref com_palm_smartkey_processTaps
+ *   - \ref com_palm_smartkey_getCompletion
+ *   - \ref com_palm_smartkey_updateWordUsage
+ */
 static LSMethod serviceMethods[] = {
         { "search", SmartKeyService::cmdSearch },
         { "learn", SmartKeyService::cmdAddUserWord },
@@ -614,6 +635,89 @@ std::string SmartKeyService::restorePunctuation(const std::string& word, const s
 	return answer;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_search search
+
+com_palm_smartkey_service/search
+
+search the candidate substitution word for the query word.
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+	"query": string,
+	"context": string,
+	"quick": boolean
+}
+\endcode
+
+\param query The word to correct. Required.
+\param context The context word prior to the word to correct. Optional.
+\param quick If set as true, engine will use checkSpelling, which is much faster but not as smart as autoCorrect which use reginal information
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "spelledCorrectly" : boolean 
+	"guesses : [
+		{
+        "str" : string
+        "sp"  : boolean
+        "auto-replace" : boolean
+	 	"auto-accept": boolean
+        }
+      ]
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param spelledCorrectly Set as true, if there is no error, otherwise false. Required
+\param guesses a array of guess object which contain the substitution string. Optional
+\param str The actual guess of the word.  
+\param sp  true if guess is a result of a spelling correction
+\param auto-replace true if guess is a result of a auto-replace match
+\param auto-accept true if engine is recommending to auto accept this guess.
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+
+luna-send -n 1 -f palm://com.palm.smartKey/search '{ "query": "oul", "context": "start", "quick": "false"}'
+{
+    "spelledCorrectly": false,
+    "guesses": [
+        {
+            "str": "oul",
+            "sp": false
+        },
+        {
+            "str": "oulu",
+            "sp": true,
+            "auto-accept": true
+        },
+        {
+            "str": "out",
+            "sp": true
+        },
+        {
+            "str": "our",
+            "sp": true
+        },
+        {
+            "str": "oil",
+            "sp": true
+        }
+    ],
+    "returnValue": true
+}
+
+
+\endcode
+*/
 bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message) {
@@ -868,6 +972,55 @@ bool SmartKeyService::notifyLanguageChanged(LanguageAction eAction)
     return succeeded;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_addUserWord addUserWord
+
+com_palm_smartkey_service/addUserWord
+
+Add new word to spell engine dictionary. Same as the method "learn"
+*/
+
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_learn learn
+
+com_palm_smartkey_service/learn
+
+Add new word to spell engine dictionary
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "word": string 
+}
+\endcode
+
+\param word the word to be add to database, required
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "word": string 
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param word the word to be add to database, required
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/learn '{"word": "Oulu"}'
+{
+    "word": "oulu",
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdAddUserWord(LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message)
@@ -930,6 +1083,43 @@ bool SmartKeyService::cmdAddUserWord(LSHandle* sh, LSMessage* message, void* ctx
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_numUserWords numUserWords
+
+com_palm_smartkey_service/numUserWords
+
+Get the number of entries of the database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+}
+\endcode
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "count": int 
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param count the number of entries of spell engine database. Required
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/numUserWords '{}'
+{
+    "returnValue": true,
+    "count": 2
+}
+\endcode
+*/
 bool SmartKeyService::cmdNumUserWords(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -973,6 +1163,51 @@ bool SmartKeyService::cmdNumUserWords(LSHandle* sh, LSMessage* message, void* ct
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_listUserWords listUserWords
+
+com_palm_smartkey_service/listUserWords
+
+Get the used words list from spell engine database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+	"offset": int
+	"limit": int
+}
+\endcode
+
+\param offset the offset of the start entry
+\param limit the size of entries
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+	"words": [string]
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param words the word array for the query. Required
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/listUserWords '{ "offset":1, "limit":2}'
+{
+    "returnValue": true,
+    "words": [
+        "haerbin",
+        "kemi"
+    ]
+}
+\endcode
+*/
 bool SmartKeyService::cmdListUserWords(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -1040,6 +1275,47 @@ bool SmartKeyService::cmdListUserWords(LSHandle* sh, LSMessage* message, void* c
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_addAutoReplace addAutoReplace
+
+com_palm_smartkey_service/addAutoReplace
+
+Add an auto replace entry to spell engine database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "shortcut":  string
+    "substitution": string the substitution word for shortcut
+}
+\endcode
+
+\param shutcut the string to be replaced
+\param substitution the substitution word for shortcut
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/addAutoReplace '{ "shortcut":"OuluU", "substitution": "Oulu Univeristy"}'
+{
+    "returnValue": true
+}
+
+
+\endcode
+*/
 bool SmartKeyService::cmdAddAutoReplace(LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message)
@@ -1109,6 +1385,44 @@ bool SmartKeyService::cmdAddAutoReplace(LSHandle* sh, LSMessage* message, void* 
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_removeAutoReplace removeAutoReplace
+
+com_palm_smartkey_service/removeAutoReplace
+
+Remove the auto replace entry from spell engine database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+	"shortcut": string
+}
+\endcode
+
+\param shortcut the shortcut string to be removed from database
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/removeAutoReplace '{"shortcut": "OuluU"}'
+{
+    "returnValue": true
+}
+
+\endcode
+*/
 bool SmartKeyService::cmdRemoveAutoReplace(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -1168,6 +1482,46 @@ bool SmartKeyService::cmdRemoveAutoReplace(LSHandle* sh, LSMessage* message, voi
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_numAutoReplace numAutoReplace
+
+com_palm_smartkey_service/numAutoReplace
+
+Get the number of auto replace entries
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "all": boolean
+}
+\endcode
+
+\param all if true, set the entry category to AllEntries, otherwise use UserEntries
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "count": int
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\count the auto replace entry number of the category in spell engine database
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/numAutoReplace '{ "all":false}'
+{
+    "returnValue": true,
+    "count": 1
+}
+\endcode
+*/
 bool SmartKeyService::cmdNumAutoReplace(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -1217,6 +1571,60 @@ bool SmartKeyService::cmdNumAutoReplace(LSHandle* sh, LSMessage* message, void* 
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_listAutoReplace listAutoReplace
+
+com_palm_smartkey_service/listAutoReplace
+
+List auto replace entries which cotains the entries from offset with size limitation
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "offset": int
+    "all": boolean
+    "limit": int
+}
+\endcode
+
+\param offset the offset position of the entry
+\param all if true, set entry category to AllEnties, otherwise use UserEntries
+\param limit the size of the return array
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "entries: [
+        {
+            "shortcut": shortcut of entries
+            "sub": the substitution of the shortcut
+        }
+    ]
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param entries The entry array. Required
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/listAutoReplace '{ "offset":0, "all":false, "limit":2}'
+{
+    "returnValue": true,
+    "entries": [
+        {
+            "shortcut": "OuluU",
+            "sub": "Oulu Univeristy"
+        }
+    ]
+}
+\endcode
+*/
 bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -1299,6 +1707,51 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_addPerson addPerson
+
+com_palm_smartkey_service/addPerson
+
+Add person name array to spell engine database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    [
+        {
+            "familyName": string
+            "midlleName": string
+            "givenName": string
+        }
+    ]
+}
+\endcode
+
+\param familyName Optional
+\param midlleName Optional
+\param givenName Optional
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/addPerson '[{"familyName":"Sun","givenName":"zheng"}, {"familyName":"Wang", "givenName":"rong"}]'
+{
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdAddPerson(LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message)
@@ -1365,6 +1818,51 @@ bool SmartKeyService::cmdAddPerson(LSHandle* sh, LSMessage* message, void* ctx)
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_removePerson removePerson
+
+com_palm_smartkey_service/removePerson
+
+Remove the person name array from spell engine database
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    [
+        {
+            "familyName": string
+            "midlleName": string
+            "givenName": string
+        }
+    ]
+}
+\endcode
+
+\param familyName Required
+\param midlleName Required
+\param givenName Required
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/removePerson '[{"familyName":"Sun", "givenName":"zheng"}, {"familyName":"Wang", "givenName":"rong"}]'
+{
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdRemovePerson(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	if (!message)
@@ -1431,6 +1929,54 @@ bool SmartKeyService::cmdRemovePerson(LSHandle* sh, LSMessage* message, void* ct
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_removeUserWord removeUserWord
+
+com_palm_smartkey_service/removeUserWord
+
+Remove the word from dictionary. Same as method "forget"
+*/
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_forget forget
+
+com_palm_smartkey_service/forget
+
+Remove the word from dictionary 
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "word": string
+}
+\endcode
+
+\param word the word to be removed from database. Required
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "word": string 
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param word the word to be remove from database, required
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/forget '{ "word": "oulu"}'
+{
+    "word": "oulu",
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdRemoveUserWord(LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message)
@@ -1491,6 +2037,41 @@ bool SmartKeyService::cmdRemoveUserWord(LSHandle* sh, LSMessage* message, void* 
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_exit exit
+
+com_palm_smartkey_service/exit
+
+DESCRIPTION
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+}
+\endcode
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/exit '{}'
+{
+    "returnValue": true
+}
+
+\endcode
+*/
 bool SmartKeyService::cmdExit(LSHandle* sh, LSMessage* message, void* ctx)
 {
     json_object* replyJson = json_object_new_object();
@@ -2116,6 +2697,72 @@ bool SmartKeyService::queryCountPersonCallback(LSHandle *sh, LSMessage *message,
     return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_processTaps processTaps
+
+com_palm_smartkey_service/processTaps
+
+Get the spell check candidte from tap squence or trace on virtual keyboard
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "taps": [ int  ]
+    "trace": [ int ]
+    "shift": string "once" or "lock"
+    "first": string
+    "last": string
+}
+
+\endcode
+\param taps the tap sequence data array. Tap consist of 4 int continuesly. If trace is not specified, Tap is required
+       Tap data structure in c is
+       {
+         int x  //x coodinate of tap Optional
+         int y  //  y coordinate of tap Optional
+         int car   //Unclear. There is no usage of it
+         boolean shift  //Unclear. There is no usage of it
+       }
+\param trace the point trace sequence. If Tap is not specified, trace is Required
+\param shft shift keys state. "once" if the shfit is pressed once time. "lock" if shift key is always pressed. Other value means shift key is not pressed. Required if trace is specified
+\param first Unclear, There is no useage of it. Required if trace is specified
+\param last Unclear, There is no useage of it. Required if trace is specified
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "traceEntry": boolean
+    "guesses":[
+        {
+            "str": the substitude str
+            "auto-replace": boolean
+            "auto-accept": boolean
+        }
+    ]
+
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param traceEntry true if the input param is trace entry. false if the input param is taps. Required
+\param guesses
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/processTaps '{ "taps":[100,630,0,1,335,556,0,1, 230,554,0,1]}'
+{
+    "returnValue": false,
+    "errorCode": 8,
+    "errorText": "No matching words"
+}
+
+\endcode
+*/
 bool SmartKeyService::cmdProcessTaps(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	double start = getTime();
@@ -2264,6 +2911,49 @@ bool SmartKeyService::cmdProcessTaps(LSHandle* sh, LSMessage* message, void* ctx
 	return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_getCompletion getCompletion
+
+com_palm_smartkey_service/getCompletion
+
+
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "prefix": string
+}
+
+\endcode
+\param prefix The prefix to try to complete Required
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "com": string
+    "exact": boolean
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param com The completed word based on the prefix. Required
+\param exact true if com is empty
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/getCompletion '{"prefix":"pre"}'
+{
+    "comp": "",
+    "exact": true,
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdGetCompletion(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	double start = getTime();
@@ -2320,6 +3010,43 @@ bool SmartKeyService::cmdGetCompletion(LSHandle* sh, LSMessage* message, void* c
 	return true;
 }
 
+/*! \page  com_palm_smartkey_service
+\n
+\section  com_palm_smartkey_updateWordUsage updateWordUsage
+
+com_palm_smartkey_service/updateWordUsage
+
+Updates usage statistics of a word. It will add it to the database if the word is not already known.
+
+\subsection com_palm_smartkey_service_syntax Syntax:
+\code
+{
+    "word":string
+}
+\endcode
+
+\param word the word to be updated. Required
+
+\subsection com_palm_smartkey_service_reply Reply:
+\code
+{
+    "returnValue": boolean
+    "errorCode": int
+    "errorText": string
+}
+\endcode
+\param returnValue true (success) or false (failure). Required
+\param errorCode the error code of error if there is error. Optional
+\param errorText the error text of error if there is error. Optional
+
+\subsection com_palm_smartkey_service_examples Examples:
+\code
+luna-send -n 1 -f palm://com.palm.smartKey/updateWordUsage '{"word":"oulu"}'
+{
+    "returnValue": true
+}
+\endcode
+*/
 bool SmartKeyService::cmdUpdateWordUsage(LSHandle* sh, LSMessage* message, void* ctx)
 {
 	double start = getTime();
