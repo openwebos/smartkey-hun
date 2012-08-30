@@ -1,15 +1,39 @@
 Summary
 =======
 
-This is the repository for com.palm.smartkey, the webOS service used for spell checking.
+SmartKey is the webOS service for spell checking.  
 Note: This is a limited functionality version, without the third party proprietary libraries used to support spell checking
+
+SmartKey
+========
+
+This service supports the following methods, which are described in detail in the generated documentation:  
+
+* com.palm.smartKey/addAutoReplace
+* com.palm.smartKey/addPerson
+* com.palm.smartKey/addUserWord
+* com.palm.smartKey/exit
+* com.palm.smartKey/forget
+* com.palm.smartKey/getCompletion
+* com.palm.smartKey/learn
+* com.palm.smartKey/listAutoReplace
+* com.palm.smartKey/listUserWords
+* com.palm.smartKey/numAutoReplace
+* com.palm.smartKey/numUserWords
+* com.palm.smartKey/processTaps
+* com.palm.smartKey/removeAutoReplace
+* com.palm.smartKey/removePerson
+* com.palm.smartKey/removeUserWord
+* com.palm.smartKey/search
+* com.palm.smartKey/updateWordUsage
+
 
 How to Build on Linux
 =====================
 
 ## Dependencies
 
-Below are the tools (and their minimum versions) required to build com.palm.smartkey:
+Below are the tools (and their minimum versions) required to build SmartKey:
 
 * cmake 2.8.7
 * gcc 4.3
@@ -50,5 +74,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-    
