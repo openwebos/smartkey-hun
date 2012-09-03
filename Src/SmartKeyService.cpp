@@ -855,7 +855,7 @@ bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
 	}
 
 	setReplyResponse(replyJson, err);
-	char * replyString = json_object_to_json_string(replyJson);
+    const char * replyString = json_object_to_json_string(replyJson);
 
     if (!LSMessageReply(sh, message, replyString, &lserror)) {
         LSErrorPrint(&lserror, stderr);
