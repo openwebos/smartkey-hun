@@ -28,6 +28,7 @@
 #include <string>
 #include <unicode/translit.h>
 #include <sys/times.h>
+#include <unistd.h>
 #include "glib.h"
 
 namespace SmartKey

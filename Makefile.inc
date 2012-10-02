@@ -59,7 +59,7 @@ FLAGS_OPT += -O2 -g -DG_DISABLE_ASSERT
 endif
 
 LIBS := $(LIBS) \
-	-lglib-2.0 -llunaservice -lcjson -licui18n -lhunspell-1.3 \
+	-lglib-2.0 -llunaservice -lcjson -licui18n -lhunspell-1.3 -lrt -licuuc\
 
 LOCAL_CFLAGS := $(CFLAGS) -Wno-deprecated -Wall $(FLAGS_OPT) $(ARCH_CFLAGS)
 

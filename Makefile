@@ -3,7 +3,7 @@ BUILD_TYPE := release
 PLATFORM   ?= arm
 
 INCLUDES := \
-	-isystem $(INCLUDE_DIR)
+	-Isystem $(INCLUDE_DIR)
 
 ifeq ($(TARGET_ARCH),arm)
 LIBS := -L$(LIB_DIR) -llunaservice
