@@ -39,6 +39,13 @@ const char* const k_pszCompCallSchema = "{\"type\" : \"object\", \
 									}";
 
 
+/**
+* SpellCheckClient()
+* <here is function description>
+*
+* @param mainLoop
+*   <perameter description>
+*/
 SpellCheckClient::SpellCheckClient(GMainLoop* mainLoop) :
 	  m_serviceClient(NULL)
 	, m_attachedToServiceBus(false)
@@ -61,6 +68,10 @@ SpellCheckClient::SpellCheckClient(GMainLoop* mainLoop) :
     }
 }
 
+/**
+* ~SpellCheckClient()
+* <here is function description>
+*/
 SpellCheckClient::~SpellCheckClient()
 {
 	LSError lserror;
@@ -79,7 +90,23 @@ SpellCheckClient::~SpellCheckClient()
 	}
 }
 
-bool SpellCheckClient::spellCheckResponse(LSHandle *sh, LSMessage *reply, void *ctx)
+/**
+* spellCheckResponse()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *reply
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SpellCheckClient::spellCheckResponse (LSHandle *sh, LSMessage *reply, void *ctx)
 {
 	SpellCheckClient* checker = static_cast<SpellCheckClient*>(ctx);
 	g_debug("Got spell check response");
@@ -115,7 +142,20 @@ bool SpellCheckClient::spellCheckResponse(LSHandle *sh, LSMessage *reply, void *
 	return true;
 }
 
-bool SpellCheckClient::checkWordSpelling(const std::string& word, SpellCheckWordInfo& info)
+/**
+* checkWordSpelling()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @param info
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SpellCheckClient::checkWordSpelling (const std::string& word, SpellCheckWordInfo& info)
 {
 	bool success(false);
 
@@ -161,7 +201,20 @@ bool SpellCheckClient::checkWordSpelling(const std::string& word, SpellCheckWord
 	return success;
 }
 
-bool SpellCheckClient::processTaps(const TapDataArray& taps, SpellCheckWordInfo& info)
+/**
+* processTaps()
+* <here is function description>
+*
+* @param taps
+*   <perameter description>
+*
+* @param info
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SpellCheckClient::processTaps (const TapDataArray& taps, SpellCheckWordInfo& info)
 {
 	bool success(false);
 
@@ -212,7 +265,20 @@ bool SpellCheckClient::processTaps(const TapDataArray& taps, SpellCheckWordInfo&
 	return success;
 }
 
-bool SpellCheckClient::getCompletion(const std::string& prefix, std::string& result)
+/**
+* getCompletion()
+* <here is function description>
+*
+* @param prefix
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SpellCheckClient::getCompletion (const std::string& prefix, std::string& result)
 {
 	bool success(false);
 
@@ -253,7 +319,23 @@ bool SpellCheckClient::getCompletion(const std::string& prefix, std::string& res
 	return success;
 }
 
-bool SpellCheckClient::getCompletionResponse(LSHandle *sh, LSMessage *reply, void *ctx)
+/**
+* getCompletionResponse()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *reply
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SpellCheckClient::getCompletionResponse (LSHandle *sh, LSMessage *reply, void *ctx)
 {
 	SpellCheckClient* checker = static_cast<SpellCheckClient*>(ctx);
 	g_debug("Got completion response");

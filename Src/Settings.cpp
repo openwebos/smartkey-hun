@@ -48,6 +48,16 @@ public:
 			g_key_file_free( keyfile );	
 	}
 
+    /**
+    * open()
+    * <here is function description>
+    *
+    * @param std::string& settingsFile
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool open(const std::string& settingsFile)
 	{
 		keyfile = g_key_file_new();
@@ -68,6 +78,22 @@ public:
 		return true;
 	}
 
+    /**
+    * ReadString()
+    * <here is function description>
+    *
+    * @param cat
+    *   <perameter description>
+    *
+    * @param name
+    *   <perameter description>
+    *
+    * @param var
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool ReadString(const char* cat, const char* name, std::string& var)
 	{
 		GError* error(NULL);
@@ -83,6 +109,22 @@ public:
 		}
 	}
 
+    /**
+    * ReadBoolean()
+    * <here is function description>
+    *
+    * @param cat
+    *   <perameter description>
+    *
+    * @param name
+    *   <perameter description>
+    *
+    * @param var
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool ReadBoolean(const char* cat, const char* name, bool& var)
 	{
 		GError* error(NULL);
@@ -97,6 +139,22 @@ public:
 		}
 	}
 
+    /**
+    * ReadInteger()
+    * <here is function description>
+    *
+    * @param cat
+    *   <perameter description>
+    *
+    * @param name
+    *   <perameter description>
+    *
+    * @param var
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool ReadInteger(const char* cat, const char* name, int& var)
 	{
 		GError* error(NULL);
@@ -111,6 +169,22 @@ public:
 		}
 	}
 
+    /**
+    * ReadDouble()
+    * <here is function description>
+    *
+    * @param cat
+    *   <perameter description>
+    *
+    * @param name
+    *   <perameter description>
+    *
+    * @param var
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool ReadDouble(const char* cat, const char* name, double& var)
 	{
 		GError* error(NULL);
@@ -125,6 +199,22 @@ public:
 		}
 	}
 
+    /**
+    * ReadFloat()
+    * <here is function description>
+    *
+    * @param cat
+    *   <perameter description>
+    *
+    * @param name
+    *   <perameter description>
+    *
+    * @param var
+    *   <perameter description>
+    *
+    * @return bool
+    *   <return value description>
+    */
 	bool ReadFloat(const char* cat, const char* name,float& var)
 	{
 		GError* error(NULL);
@@ -141,6 +231,16 @@ public:
 };
 
 
+/**
+* load()
+* <here is function description>
+*
+* @param settingsFile
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool Settings::load(const std::string& settingsFile)
 {
 	KeyFileReader	reader;
@@ -155,6 +255,19 @@ bool Settings::load(const std::string& settingsFile)
 	return true;
 }
 
+/**
+* findLocalResource()
+* <here is function description>
+*
+* @param pathPrefix
+*   <perameter description>
+*
+* @param pathSuffix
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
 std::string SmartKey::LocaleSettings::findLocalResource(const std::string& pathPrefix, const char * pathSuffix) const
 {
 	// standard case: input language 'en', country 'us' -> 'en_us', or input language 'fr', country 'ca' -> 'fr_ca'

@@ -34,6 +34,16 @@
 namespace SmartKey
 {
 
+/**
+* chomp()
+* <here is function description>
+*
+* @param *str
+*   <perameter description>
+*
+* @param numChars
+*   <perameter description>
+*/
 void StringUtils::chomp(char* str, size_t numChars)
 {
 	while (*str != '\0' && numChars--) {
@@ -45,7 +55,20 @@ void StringUtils::chomp(char* str, size_t numChars)
 	}
 }
 
-bool StringUtils::compareStrings(const std::string& first, const std::string& second)
+/**
+* compareStrings()
+* <here is function description>
+*
+* @param first
+*   <perameter description>
+*
+* @param second
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool StringUtils::compareStrings (const std::string& first, const std::string& second)
 {
 	UnicodeString uFirst  = StringUtils::utf8StringToUnicodeString(first);
 	UnicodeString uSecond = StringUtils::utf8StringToUnicodeString(second);
@@ -59,7 +82,17 @@ bool StringUtils::compareStrings(const std::string& first, const std::string& se
 	return uFirst < uSecond;
 }
 
-bool StringUtils::transliterate(UnicodeString& str)
+/**
+* transliterate()
+* <here is function description>
+*
+* @param str
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool StringUtils::transliterate (UnicodeString& str)
 {
 	UParseError parseError = { 0 };
 	UErrorCode lStatus    = U_ZERO_ERROR;
@@ -79,7 +112,17 @@ bool StringUtils::transliterate(UnicodeString& str)
 	return true;
 }
 
-std::string StringUtils::utf8tolower(const std::string& str)
+/**
+* utf8tolower()
+* <here is function description>
+*
+* @param str
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
+std::string StringUtils::utf8tolower (const std::string& str)
 {
     std::string   lowerStr;
     lowerStr.reserve(str.size());
@@ -96,7 +139,17 @@ std::string StringUtils::utf8tolower(const std::string& str)
     return lowerStr;
 }
 
-UnicodeString StringUtils::utf8StringToUnicodeString(const std::string& str)
+/**
+* utf8StringToUnicodeString()
+* <here is function description>
+*
+* @param str
+*   <perameter description>
+*
+* @return UnicodeString
+*   <return value description>
+*/
+UnicodeString StringUtils::utf8StringToUnicodeString (const std::string& str)
 {
 	if (str.empty())
 		return UnicodeString();
@@ -112,7 +165,19 @@ UnicodeString StringUtils::utf8StringToUnicodeString(const std::string& str)
 	}
 }
 
-	
+/**
+* string_printf()
+* <here is function description>
+*
+* @param *format
+*   <perameter description>
+*
+* @param ...
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
 std::string string_printf(const char *format, ...)
 {
 	if (format == 0)

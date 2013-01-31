@@ -19,20 +19,37 @@
 #include "PerfTimer.h"
 #include <glib.h>
 
+
+/**
+* PerfTimer()
+* <here is function description>
+*/
 PerfTimer::PerfTimer()
 {
 }
 
+/**
+* start()
+* <here is function description>
+*/
 void PerfTimer::start()
 {
     _start = gettime();
 }
 
+/**
+* stop()
+* <here is function description>
+*/
 void PerfTimer::stop()
 {
     _stop = gettime();
 }
 
+/**
+* print()
+* <here is function description>
+*/
 void PerfTimer::print(const char* msg)
 {
     if (msg)
@@ -41,6 +58,13 @@ void PerfTimer::print(const char* msg)
         g_debug("Interval took %g msec", (_stop - _start) * 1000.0);
 }
 
+/**
+* gettime()
+* <here is function description>
+*
+* @return double
+*   <return value description>
+*/
 double PerfTimer::gettime()
 {
     struct timespec curTime;

@@ -21,23 +21,44 @@
 namespace SmartKey
 {
 
+/**
+* SmkyDatabase()
+* <here is function description>
+*
+* @param lingInfo
+*   <perameter description>
+*/
 SmkyDatabase::SmkyDatabase(SMKY_LINFO& lingInfo) :
 	m_lingInfo(lingInfo)
 {
 }
 
 /**
- * Add a word to this database.
- */
-SmartKeyErrorCode SmkyDatabase::learnWord(const std::string& word)
+* learnWord()
+* Add a word to this database.
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkyDatabase::learnWord (const std::string& word)
 {
 	return SKERR_UNSUPPORTED;
 }
 
 /**
- * Un-learn a word.
- */
-SmartKeyErrorCode SmkyDatabase::forgetWord(const std::string& word)
+* forgetWord()
+* Un-learn a word.
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkyDatabase::forgetWord (const std::string& word)
 {
 	return SKERR_UNSUPPORTED;
 }

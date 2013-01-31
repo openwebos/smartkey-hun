@@ -33,6 +33,16 @@ namespace SmartKey
 // By default words are 64 characters.
 const size_t k_DatabaseSize = 50 * 1024; // 50KB / 64 = 800 words
 
+/**
+* SmkyUserDatabase()
+* <here is function description>
+*
+* @param lingInfo
+*   <perameter description>
+*
+* @param settings
+*   <perameter description>
+*/
 SmkyUserDatabase::SmkyUserDatabase(SMKY_LINFO& lingInfo, const Settings& settings) :
 	SmkyDatabase(lingInfo)
 	, m_settings(settings)
@@ -40,6 +50,10 @@ SmkyUserDatabase::SmkyUserDatabase(SMKY_LINFO& lingInfo, const Settings& setting
 {
 }
 
+/**
+* ~SmkyUserDatabase()
+* <here is function description>
+*/
 SmkyUserDatabase::~SmkyUserDatabase()
 {
 	SMKY_STATUS wStatus = saveDb();
@@ -50,25 +64,50 @@ SmkyUserDatabase::~SmkyUserDatabase()
 	if (NULL != m_pDatabaseData) free(m_pDatabaseData);
 }
 
+/**
+* getDbPath()
+* <here is function description>
+*
+* @return std::string
+*   <return value description>
+*/
 std::string SmkyUserDatabase::getDbPath() const
 {
 	return m_settings.readWriteDataDir + "/smky/user_db.bin";
 }
 
+/**
+* init()
+* <here is function description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkyUserDatabase::init()
 {
 	g_assert(m_pDatabaseData == NULL);
 	return SMKY_STATUS_NO_MEMORY;
 }
 
+/**
+* save()
+* <here is function description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::save()
 {
 	return smkyErrorToSmartKeyError(saveDb());
 }
 
 /**
- * Save the user database out to the filesystem.
- */
+* saveDb()
+* Save the user database out to the filesystem.
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkyUserDatabase::saveDb()
 {
 	g_message("Saving user database");
@@ -110,10 +149,15 @@ SMKY_STATUS SmkyUserDatabase::saveDb()
 }
 
 /**
- * See if a word exists in the user database.
- *
- * @return true if the word is in the database. false if not (or on error).
- */
+* findWord()
+* See if a word exists in the user database.
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   true if the word is in the database. false if not (or on error).
+*/
 SmartKeyErrorCode SmkyUserDatabase::findWord(const std::string& word) const
 {
 	if (word.empty())
@@ -122,6 +166,16 @@ SmartKeyErrorCode SmkyUserDatabase::findWord(const std::string& word) const
 	return smkyErrorToSmartKeyError(SMKY_STATUS_NO_MATCHING_WORDS);
 }
 
+/**
+* learnWord()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::learnWord(const std::string& word)
 {
 	if (word.empty())
@@ -130,6 +184,16 @@ SmartKeyErrorCode SmkyUserDatabase::learnWord(const std::string& word)
 	return SKERR_SUCCESS;
 }
 
+/**
+* forgetWord()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::forgetWord(const std::string& word)
 {
 	if (word.empty())
@@ -139,8 +203,15 @@ SmartKeyErrorCode SmkyUserDatabase::forgetWord(const std::string& word)
 }
 
 /**
- * Loads <b>all</b> user entries into the provided list - unsorted.
- */
+* loadEntries()
+* Loads <b>all</b> user entries into the provided list - unsorted.
+*
+* @param entries
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::loadEntries(std::list<std::string>& entries) const
 {
 	entries.clear();
@@ -148,6 +219,22 @@ SmartKeyErrorCode SmkyUserDatabase::loadEntries(std::list<std::string>& entries)
 	return SKERR_SUCCESS;
 }
 
+/**
+* getEntries()
+* <here is function description>
+*
+* @param offset
+*   <perameter description>
+*
+* @param limit
+*   <perameter description>
+*
+* @param entries
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::getEntries(int offset, int limit, std::list<std::string>& entries)
 {
 	if (offset < 0 || limit < 0)
@@ -158,12 +245,32 @@ SmartKeyErrorCode SmkyUserDatabase::getEntries(int offset, int limit, std::list<
 	return SKERR_SUCCESS;
 }
 
-SmartKeyErrorCode SmkyUserDatabase::getNumEntries(int& entries)
+/**
+* getNumEntries()
+* <here is function description>
+*
+* @param entries
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkyUserDatabase::getNumEntries (int& entries)
 {
 	entries = 0;
 	return SKERR_SUCCESS;
 }
 
+/**
+* smkyErrorToSmartKeyError()
+* <here is function description>
+*
+* @param err
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS err)
 {
 	switch (err) {
@@ -176,13 +283,33 @@ SmartKeyErrorCode SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS err)
 	}
 }
 
+/**
+* setLocaleSettings()
+* <here is function description>
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyUserDatabase::setLocaleSettings(const LocaleSettings& localeSettings)
 {
 	// We only have one user database for all locales.
 	return SKERR_SUCCESS;
 }
 
-SmartKeyErrorCode SmkyUserDatabase::updateWordUsage(const std::string& word)
+/**
+* updateWordUsage()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkyUserDatabase::updateWordUsage (const std::string& word)
 {
 	if (word.empty())
 		return SKERR_BAD_PARAM;

@@ -52,6 +52,13 @@ static const Settings* g_pSettings;
 namespace SmartKey {
 
 /* public */
+/**
+* SmkySpellCheckEngine()
+* <here is function description>
+*
+* @param settings
+*   <perameter description>
+*/
 SmkySpellCheckEngine::SmkySpellCheckEngine(const Settings& settings) :
 	  m_userDb(NULL)
 	, m_manDb(NULL)
@@ -73,6 +80,10 @@ SmkySpellCheckEngine::SmkySpellCheckEngine(const Settings& settings) :
 }
 
 /* public */
+/**
+* ~SmkySpellCheckEngine()
+* <here is function description>
+*/
 SmkySpellCheckEngine::~SmkySpellCheckEngine()
 {
 	delete m_autoSubDb;
@@ -80,6 +91,13 @@ SmkySpellCheckEngine::~SmkySpellCheckEngine()
 	delete m_manDb;
 }
 
+/**
+* init()
+* <here is function description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkySpellCheckEngine::init()
 {
 	return SMKY_STATUS_NONE;
@@ -87,6 +105,13 @@ SMKY_STATUS SmkySpellCheckEngine::init()
 
 
 /* public */
+/**
+* getSupportedLanguages()
+* <here is function description>
+*
+* @return char*
+*   <return value description>
+*/
 const char *  SmkySpellCheckEngine::getSupportedLanguages() const
 {
     return "{\"languages\":[\"en_un\",\"es_un\",\"fr_un\",\"de_un\",\"it_un\"]}";
@@ -94,6 +119,16 @@ const char *  SmkySpellCheckEngine::getSupportedLanguages() const
 
 
 /* private */
+/**
+* wordIsAllDigits()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmkySpellCheckEngine::wordIsAllDigits(const std::string& word)
 {
 	std::string::const_iterator i;
@@ -106,6 +141,22 @@ bool SmkySpellCheckEngine::wordIsAllDigits(const std::string& word)
 }
 
 /* public */
+/**
+* checkSpelling()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @param maxGuesses
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling(const std::string& word, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
@@ -113,6 +164,25 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling(const std::string& word, S
 }
 
 /* public */
+/**
+* autoCorrect()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @param context
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @param maxGuesses
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, const std::string& context, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
@@ -131,13 +201,51 @@ SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, con
 #define DEBUG_PRIMEWORD(fmt, args...) (void)0
 #endif
 
-SMKY_STATUS SmkySpellCheckEngine::typeWord(const uint16_t * word, uint16_t wordLength)
+/**
+* typeWord()
+* <here is function description>
+*
+* @param *word
+*   <perameter description>
+*
+* @param wordLength
+*   <perameter description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
+SMKY_STATUS SmkySpellCheckEngine::typeWord (const uint16_t *word, uint16_t wordLength)
 {
     SMKY_STATUS wStatus = SMKY_STATUS_NONE;
     return wStatus;
 }
 
 /* public */
+/**
+* processTrace()
+* <here is function description>
+*
+* @param points
+*   <perameter description>
+*
+* @param shift
+*   <perameter description>
+*
+* @param firstChars
+*   <perameter description>
+*
+* @param lastChars
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @param maxGuesses
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkySpellCheckEngine::processTrace(const std::vector<unsigned int>& points, EShiftState shift, const std::string& firstChars, const std::string& lastChars, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
@@ -145,14 +253,43 @@ SmartKeyErrorCode SmkySpellCheckEngine::processTrace(const std::vector<unsigned 
 }
 
 /* public */
-SmartKeyErrorCode SmkySpellCheckEngine::processTaps(const TapDataArray& taps, SpellCheckWordInfo& result, int maxGuesses)
+/**
+* processTaps()
+* <here is function description>
+*
+* @param taps
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @param maxGuesses
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkySpellCheckEngine::processTaps (const TapDataArray& taps, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
 
 	return SKERR_SUCCESS;
 }
 
-SMKY_STATUS SmkySpellCheckEngine::getSelectionResults(SpellCheckWordInfo& result, int maxGuesses)
+/**
+* getSelectionResults()
+* <here is function description>
+*
+* @param result
+*   <perameter description>
+*
+* @param maxGuesses
+*   <perameter description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
+SMKY_STATUS SmkySpellCheckEngine::getSelectionResults (SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
 	SMKY_STATUS wStatus = SMKY_STATUS_NONE;
@@ -160,7 +297,20 @@ SMKY_STATUS SmkySpellCheckEngine::getSelectionResults(SpellCheckWordInfo& result
 }
 
 /* public */
-SmartKeyErrorCode SmkySpellCheckEngine::getCompletion(const std::string& prefix, std::string& result)
+/**
+* getCompletion()
+* <here is function description>
+*
+* @param prefix
+*   <perameter description>
+*
+* @param result
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkySpellCheckEngine::getCompletion (const std::string& prefix, std::string& result)
 {
 	result.clear();
 
@@ -173,31 +323,56 @@ SmartKeyErrorCode SmkySpellCheckEngine::getCompletion(const std::string& prefix,
 	return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_NONE);
 }
 
-/**
- * Return the user (read/write) database.
- */
 /* public */
+/**
+* getUserDatabase()
+* Return the user (read/write) database.
+*
+* @return UserDatabase*
+*   <return value description>
+*/
 UserDatabase* SmkySpellCheckEngine::getUserDatabase()
 {
 	return m_userDb;
 }
 
-/**
- * Return the auto-substitution (read/write) database.
- */
 /* public */
+/**
+* getAutoSubDatabase()
+* Return the auto-substitution (read/write) database.
+*
+* @return AutoSubDatabase*
+*   <return value description>
+*/
 AutoSubDatabase* SmkySpellCheckEngine::getAutoSubDatabase()
 {
 	return m_autoSubDb;
 }
 
 /* public */
+/**
+* getManufacturerDatabase()
+* <here is function description>
+*
+* @return Database*
+*   <return value description>
+*/
 Database* SmkySpellCheckEngine::getManufacturerDatabase()
 {
 	return m_manDb;
 }
 
-SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo(uint16_t wLangId)
+/**
+* getLanguageInfo()
+* <here is function description>
+*
+* @param wLangId
+*   <perameter description>
+*
+* @return LanguageInfo*
+*   <return value description>
+*/
+SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo (uint16_t wLangId)
 {
 	std::list<LanguageInfo>::iterator i;
 	for (i = m_langInfo.begin(); i != m_langInfo.end(); ++i) {
@@ -209,6 +384,16 @@ SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo(uint16
 	return NULL;
 }
 
+/**
+* getLanguageInfo()
+* <here is function description>
+*
+* @param languageCode
+*   <perameter description>
+*
+* @return LanguageInfo*
+*   <return value description>
+*/
 SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo(const std::string& languageCode)
 {
 	if (languageCode.length() < 2) {
@@ -234,8 +419,12 @@ SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo(const 
 }
 
 /**
- * @return The  return code.
- */
+* initLanguage()
+* <here is function description>
+*
+* @return SMKY_STATUS
+*   The return code.
+*/
 SMKY_STATUS SmkySpellCheckEngine::LanguageInfo::initLanguage()
 {
 	if (m_initAttempted)
@@ -247,9 +436,18 @@ SMKY_STATUS SmkySpellCheckEngine::LanguageInfo::initLanguage()
 }
 
 /**
- * Set the current primary locale.
- */
-/* public */
+* setLocaleSettings()
+* Set the current primary locale.
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @param isVirtualKeyboard
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmkySpellCheckEngine::setLocaleSettings(const LocaleSettings& localeSettings, bool isVirtualKeyboard)
 {
 	g_debug("SmkySpellCheckEngine::setLocaleSettings: %s, %s", localeSettings.getFullLocale().c_str(), isVirtualKeyboard ? "virtual keyboard" : "physical keyboard");
@@ -276,6 +474,19 @@ bool SmkySpellCheckEngine::setLocaleSettings(const LocaleSettings& localeSetting
 	return wStatus == SMKY_STATUS_NONE;
 }
 
+/**
+* loadWords()
+* <here is function description>
+*
+* @param fname
+*   <perameter description>
+*
+* @param words
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkySpellCheckEngine::loadWords(const std::string& fname, std::set<std::string>& words)
 {
 	if (fname.empty())
@@ -299,11 +510,18 @@ SmartKeyErrorCode SmkySpellCheckEngine::loadWords(const std::string& fname, std:
 }
 
 /**
- * Loads a list of words from all locales (other than the current) that have spellings that
- * are specific to that locale. We use this list to prevent auto-correcting to those words.
- * This is necessary because it has a Global English LDB that often contains words from
- * multiple locales (but not with the correct frequency). More info at NOV-116715.
- */
+* loadLocaleWords()
+* Loads a list of words from all locales (other than the current) that have spellings that
+* are specific to that locale. We use this list to prevent auto-correcting to those words.
+* This is necessary because it has a Global English LDB that often contains words from
+* multiple locales (but not with the correct frequency). More info at NOV-116715.
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkySpellCheckEngine::loadLocaleWords(const LocaleSettings& localeSettings)
 {
 	const std::string	localeDir = m_settings.readOnlyDataDir + "/smky/DefaultData/locale";
@@ -362,7 +580,17 @@ SmartKeyErrorCode SmkySpellCheckEngine::loadLocaleWords(const LocaleSettings& lo
 	return err;
 }
 
-SmartKeyErrorCode SmkySpellCheckEngine::loadWhitelist(const LocaleSettings& localeSettings)
+/**
+* loadWhitelist()
+* <here is function description>
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkySpellCheckEngine::loadWhitelist (const LocaleSettings& localeSettings)
 {
 	m_whitelist.clear();
 

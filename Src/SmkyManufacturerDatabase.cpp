@@ -34,6 +34,18 @@ static SmkyManufacturerDatabase* g_ManDb;
 
 const int cMinimumHunspellEntryCount = 1000;
 
+/**
+* SmkyManufacturerDatabase()
+*
+* @param SMKY_LINFO& lingInfo
+*   <perameter description>
+*
+* @param Settings& settings
+*   <perameter description>
+*
+* @return
+*   <return value description>
+*/
 SmkyManufacturerDatabase::SmkyManufacturerDatabase(SMKY_LINFO& lingInfo, const Settings& settings) :
 	SmkyDatabase(lingInfo)
 	, m_settings(settings)
@@ -52,12 +64,27 @@ SmkyManufacturerDatabase::SmkyManufacturerDatabase(SMKY_LINFO& lingInfo, const S
 
 }
 
+/**
+* ~SmkyManufacturerDatabase()
+* <here is function description>
+*
+*/
 SmkyManufacturerDatabase::~SmkyManufacturerDatabase()
 {
 	g_ManDb = NULL;
 	deleteHunspellDictionary();
 }
 
+/**
+* setExpectedCount()
+* <here is function description>
+*
+* @param int count
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyManufacturerDatabase::setExpectedCount(int count)
 {
 	if (count > m_expectedContactCount)
@@ -66,6 +93,11 @@ SmartKeyErrorCode SmkyManufacturerDatabase::setExpectedCount(int count)
 	return SKERR_SUCCESS;
 }
 
+/**
+* createHunspellDictionary()
+* <here is function description>
+*
+*/
 void SmkyManufacturerDatabase::createHunspellDictionary()
 {
 	if (!m_hunspell)
@@ -114,6 +146,11 @@ void SmkyManufacturerDatabase::createHunspellDictionary()
 	}
 }
 
+/**
+* deleteHunspellDictionary()
+* <here is function description>
+*
+*/
 void SmkyManufacturerDatabase::deleteHunspellDictionary()
 {
 	if (m_hunspell)
@@ -128,6 +165,16 @@ void SmkyManufacturerDatabase::deleteHunspellDictionary()
 	}
 }
 
+/**
+* learnWord()
+* <here is function description>
+*
+* @param std::string& word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyManufacturerDatabase::learnWord(const std::string& word)
 {
 	//g_debug("Learning \"%s\"", word.c_str());
@@ -157,6 +204,16 @@ SmartKeyErrorCode SmkyManufacturerDatabase::learnWord(const std::string& word)
 	return SKERR_SUCCESS;
 }
 
+/**
+* forgetWord()
+* <here is function description>
+*
+* @param std::string& word
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyManufacturerDatabase::forgetWord(const std::string& word)
 {
 	std::map<std::string, int>::iterator i = m_words.find(word);
@@ -180,6 +237,13 @@ SmartKeyErrorCode SmkyManufacturerDatabase::forgetWord(const std::string& word)
 	return SKERR_SUCCESS;
 }
 
+/**
+* save()
+* <here is function description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
 SmartKeyErrorCode SmkyManufacturerDatabase::save()
 {
 	return SKERR_SUCCESS;
@@ -197,6 +261,14 @@ SmartKeyErrorCode SmkyManufacturerDatabase::save()
 #define DEBUG_CALLBACK(fmt, args...) (void)0
 #endif
 
+/**
+* setQuery()
+* <here is function description>
+*
+* @param std::string &query
+*   <perameter description>
+*
+*/
 void SmkyManufacturerDatabase::setQuery(const std::string &query)
 {
 	m_lastFirstLastLetterResults.clear();
@@ -226,6 +298,20 @@ void SmkyManufacturerDatabase::setQuery(const std::string &query)
 	}
 }
 
+/**
+* setFistAndLastLetters()
+* <here is function description>
+*
+* @param std::string & firstLetters
+*   <perameter description>
+*
+* @param std::string & lastLetters
+*   <perameter description>
+*
+* @param int minLength
+*   <perameter description>
+*
+*/
 void SmkyManufacturerDatabase::setFistAndLastLetters(const std::string & firstLetters, const std::string & lastLetters, int minLength)
 {
 	if (m_hunspell && m_lastHunspellResult)
@@ -271,6 +357,31 @@ void SmkyManufacturerDatabase::setFistAndLastLetters(const std::string & firstLe
 	}
 }
 
+/**
+* dbCallback()
+* <here is function description>
+*
+* @param SMKY_REQ_MODE eMdbRequestType
+*   <perameter description>
+*
+* @param uint16_t wWordLen
+*   <perameter description>
+*
+* @param uint16_t wMaxWordLen
+*   <perameter description>
+*
+* @param uint16_t *psBuildTxtBuf
+*   <perameter description>
+*
+* @param uint16_t *pwActWordLen
+*   <perameter description>
+*
+* @param uint32_t *pdwWordListIdx
+*   <perameter description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkyManufacturerDatabase::dbCallback(
     SMKY_REQ_MODE eMdbRequestType,   /**< I   - MDB request type. Should be one of the values defined above */
     uint16_t    wWordLen,          /**< I   - word length */
@@ -324,14 +435,42 @@ SMKY_STATUS SmkyManufacturerDatabase::dbCallback(
 	return SMKY_STATUS_ERROR;	// we're done
 }
 
+/**
+* ManufacturerDbCallback()
+* <here is function description>
+*
+* @param SMKY_LINFO *pLingInfo
+*   pointer to FieldInfo struct owning MDB
+*
+* @param SMKY_REQ_MODE eMdbRequestType
+*   MDB request type. Should be one of the values defined above
+*
+* @param uint16_t wWordLen
+*   word length
+*
+* @param uint16_t wMaxWordLen
+*   maximum word length
+*
+* @param uint16_t *psBuildTxtBuf
+*   word to return
+*
+* @param uint16_t *pwActWordLen
+*   length of the returned word
+*
+* @param uint32_t *pdwWordListIdx
+*   MDB word list index
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkyManufacturerDatabase::ManufacturerDbCallback(
-    SMKY_LINFO *pLingInfo,    /**< I   - pointer to FieldInfo struct owning MDB */
-    SMKY_REQ_MODE eMdbRequestType,   /**< I   - MDB request type. Should be one of the values defined above */
-    uint16_t    wWordLen,          /**< I   - word length */
-    uint16_t    wMaxWordLen,       /**< I   - maximum word length */
-    uint16_t  *psBuildTxtBuf,     /**< O   - word to return */
-    uint16_t   *pwActWordLen,      /**< O   - length of the returned word */
-    uint32_t   *pdwWordListIdx)    /**< I/O - MDB word list index */
+    SMKY_LINFO *pLingInfo,    
+    SMKY_REQ_MODE eMdbRequestType,   
+    uint16_t    wWordLen,          
+    uint16_t    wMaxWordLen,       
+    uint16_t  *psBuildTxtBuf,     
+    uint16_t   *pwActWordLen,     
+    uint32_t   *pdwWordListIdx)   
 {
 	if (g_ManDb == NULL) {
         g_warning("SmkyManufacturerDatabase::ManufacturerDbCallback: no manufacturer database");
@@ -343,6 +482,17 @@ SMKY_STATUS SmkyManufacturerDatabase::ManufacturerDbCallback(
 	}
 }
 
+/**
+* getExactMatch()
+* <here is function description>
+*
+* @param std::string & outExactMatch
+*   <perameter description>
+*
+* @return bool
+*   TRUE :
+*   FALSE:
+*/
 bool SmkyManufacturerDatabase::getExactMatch(std::string & outExactMatch)
 {
 	if (m_hunspell && m_lastHunspellResult && m_lastHunspellResultCount > 0)
@@ -359,6 +509,10 @@ bool SmkyManufacturerDatabase::getExactMatch(std::string & outExactMatch)
 	return false;
 }
 
+/**
+* logStatistics()
+* <here is function description>
+*/
 void SmkyManufacturerDatabase::logStatistics() const
 {
 	size_t sumWords = m_words.size();
@@ -410,6 +564,19 @@ void SmkyManufacturerDatabase::logStatistics() const
 	g_debug("Man DB stats:  minCounts=%u, maxCounts=%u, avgCounts=%g", minCounts, maxCounts, avgEntryCount);
 }
 
+/**
+* loadWords()
+* <here is function description>
+*
+* @param *path
+*   <perameter description>
+*
+* @param wordList
+*   <perameter description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
 SMKY_STATUS SmkyManufacturerDatabase::loadWords(const char * path, std::list<std::string> & wordList)
 {
 	SMKY_STATUS wStatus = SMKY_STATUS_NONE;
@@ -442,11 +609,18 @@ SMKY_STATUS SmkyManufacturerDatabase::loadWords(const char * path, std::list<std
 }
 
 /**
- * Load our default hard-coded words and put them into this database. Save the words we add
- * so that if the locale changes we can remove those words and re-read in new ones from
- * the new locale.
- */
-SMKY_STATUS SmkyManufacturerDatabase::loadDefaultData(const LocaleSettings& localeSettings)
+* loadDefaultData()
+* Load our default hard-coded words and put them into this database. Save the words we add
+* so that if the locale changes we can remove those words and re-read in new ones from
+* the new locale.
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @return SMKY_STATUS
+*   <return value description>
+*/
+SMKY_STATUS SmkyManufacturerDatabase::loadDefaultData (const LocaleSettings& localeSettings)
 {
 	std::string fname =  localeSettings.findLocalResource(m_settings.readOnlyDataDir + "/smky/DefaultData/manufacturer/", "/man-db-entries");
 	SMKY_STATUS wStatus = loadWords(fname.c_str(), m_stockManDbWords);
@@ -457,7 +631,17 @@ SMKY_STATUS SmkyManufacturerDatabase::loadDefaultData(const LocaleSettings& loca
 	return wStatus;
 }
 
-SmartKeyErrorCode SmkyManufacturerDatabase::setLocaleSettings(const LocaleSettings& localeSettings)
+/**
+* setLocaleSettings()
+* <here is function description>
+*
+* @param localeSettings
+*   <perameter description>
+*
+* @return SmartKeyErrorCode
+*   <return value description>
+*/
+SmartKeyErrorCode SmkyManufacturerDatabase::setLocaleSettings (const LocaleSettings& localeSettings)
 
 {
 	return SmkyUserDatabase::smkyErrorToSmartKeyError(loadDefaultData(localeSettings));

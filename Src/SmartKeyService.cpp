@@ -69,14 +69,15 @@ const char* const languageChangedSignalName = "palm://com.palm.smartKey/com/palm
 const char* const k_setToCarrierDefaultsPropName = "setToCarrierDefaults";
 
 /**
- * Is this process running as a daemon (i.e. by upstart)?
- */
-static bool
-isDaemonized()
+* isDaemonized()
+* Is this process running as a daemon (i.e. by upstart)?
+*
+* @return bool
+*    This is only true because our devices don't have HOME set and the
+*    desktop does. It would be nice to have a more accurate way of knowing
+*    that this process is daemonized.
+*/static bool isDaemonized()
 {
-	// This is only true because our devices don't have HOME set and the 
-	// desktop does. It would be nice to have a more accurate way of knowing
-	// that this process is daemonized.
 	return getenv("HOME") == NULL;
 }
 
@@ -86,6 +87,22 @@ bool ValidJsonObject(T jsonObj)
 	return NULL != jsonObj && !is_error(jsonObj);
 }
 
+/**
+* logFilter()
+* <here is function description>
+*
+* @param log_domain
+*   <perameter description>
+*
+* @param log_level
+*   <perameter description>
+*
+* @param message
+*   <perameter description>
+*
+* @param unused_data
+*   <perameter description>
+*/
 static void logFilter(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer unused_data)
 {
 #if defined(GATHER_STATS)
@@ -123,6 +140,13 @@ static void logFilter(const gchar *log_domain, GLogLevelFlags log_level, const g
 	}
 }
 
+/**
+* handle_signal()
+* <here is function description>
+*
+* @param sig
+*   <perameter description>
+*/
 static void handle_signal(int sig)
 {
 	syslog(LOG_DEBUG, "SmartKey got signal: %d", sig);
@@ -138,12 +162,23 @@ static void handle_signal(int sig)
 	}
 }
 
+/**
+* term_handler()
+* <here is function description>
+*
+* @param signal
+*   <perameter description>
+*/
 static void term_handler( int signal )
 {
     g_main_loop_quit( g_mainloop );
 	syslog(LOG_INFO, "Stopping SmartKey: terminated by signal");
 }
 
+/**
+* installSignalHandlers()
+* <here is function description>
+*/
 void installSignalHandlers()
 {
 	signal (SIGINT, handle_signal);
@@ -159,6 +194,13 @@ void installSignalHandlers()
     (void)sigaction( SIGTERM, &sact, NULL );
 }
 
+/**
+* main
+* <here is function description>
+*
+* @return int
+*   <return value description>
+*/
 int main()
 {
 	syslog(LOG_INFO, "Starting SmartKey service");
@@ -262,6 +304,13 @@ LSSignal serviceSignals[] = {
     {},
 };
 
+/**
+* SmartKeyService()
+* <here is function description>
+*
+* @param settings
+*   <perameter description>
+*/
 SmartKeyService::SmartKeyService(const Settings& settings) :
   m_service(NULL)
 , m_carrierDbWatchToken(0)
@@ -281,6 +330,10 @@ SmartKeyService::SmartKeyService(const Settings& settings) :
 #endif
 }
 
+/**
+* ~SmartKeyService()
+* <here is function description>
+*/
 SmartKeyService::~SmartKeyService()
 {
 	cancelCarrierDbSettingsWatch();
@@ -288,7 +341,17 @@ SmartKeyService::~SmartKeyService()
 	delete m_engine;
 }
 
-static const WordGuess* getAutoAcceptGuess(const SpellCheckWordInfo& info)
+/**
+* getAutoAcceptGuess()
+* <here is function description>
+*
+* @param info
+*   <perameter description>
+*
+* @return WordGuess*
+*   <return value description>
+*/
+static const WordGuess* getAutoAcceptGuess (const SpellCheckWordInfo& info)
 {
 	std::vector<WordGuess>::const_iterator guess;
 	for (guess = info.guesses.begin(); guess != info.guesses.end(); ++guess) {
@@ -299,7 +362,17 @@ static const WordGuess* getAutoAcceptGuess(const SpellCheckWordInfo& info)
 	return NULL;
 }
 
-static const WordGuess* getAutoReplaceGuess(const SpellCheckWordInfo& info)
+/**
+* getAutoReplaceGuess()
+* <here is function description>
+*
+* @param info
+*   <perameter description>
+*
+* @return WordGuess*
+*   <return value description>
+*/
+static const WordGuess* getAutoReplaceGuess (const SpellCheckWordInfo& info)
 {
 	std::vector<WordGuess>::const_iterator guess;
 	for (guess = info.guesses.begin(); guess != info.guesses.end(); ++guess) {
@@ -310,7 +383,20 @@ static const WordGuess* getAutoReplaceGuess(const SpellCheckWordInfo& info)
 	return NULL;
 }
 
-static double percent(double num, double denom)
+/**
+* percent()
+* <here is function description>
+*
+* @param num
+*   <perameter description>
+*
+* @param denom
+*   <perameter description>
+*
+* @return double
+*   <return value description>
+*/
+static double percent (double num, double denom)
 {
 	if (denom == 0.0)
 		return 0.0;
@@ -416,7 +502,17 @@ void SmartKeyService::getAutoReplaceStats(const std::string& fname) const
 	printf("Num errors: %d\n", numErrors);
 }
 
-std::string SmartKeyService::dirName(const std::string& path)
+/**
+* dirName()
+* <here is function description>
+*
+* @param path
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
+std::string SmartKeyService::dirName (const std::string& path)
 {
 	std::string dir;
 
@@ -434,6 +530,16 @@ std::string SmartKeyService::dirName(const std::string& path)
 	return dir;
 }
 
+/**
+* fileSize()
+* <here is function description>
+*
+* @param fname
+*   <perameter description>
+*
+* @return size_t
+*   <return value description>
+*/
 size_t SmartKeyService::fileSize(const std::string& fname)
 {
 	struct stat buf;
@@ -445,6 +551,19 @@ size_t SmartKeyService::fileSize(const std::string& fname)
 	};
 }
 
+/**
+* start()
+* <here is function description>
+*
+* @param mainLoop
+*   <perameter description>
+*
+* @param serviceName
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmartKeyService::start(GMainLoop* mainLoop, const char* serviceName)
 {
     LSError lserror;
@@ -511,6 +630,13 @@ Exit:
     return success;
 }
 
+/**
+* stop()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmartKeyService::stop()
 {
 	g_message("%s: stopping service %s", __FUNCTION__, "SmartKey");
@@ -529,7 +655,17 @@ bool SmartKeyService::stop()
     return true;
 }
 
-static const char* getErrorString(SmartKeyErrorCode err)
+/**
+* getErrorString()
+* <here is function description>
+*
+* @param err
+*   <perameter description>
+*
+* @return const char*
+*   <return value description>
+*/
+static const char* getErrorString (SmartKeyErrorCode err)
 {
 	switch (err) {
 		case SKERR_SUCCESS: return "success";
@@ -545,7 +681,17 @@ static const char* getErrorString(SmartKeyErrorCode err)
 	}
 }
 
-void setReplyResponse(json_object* reply, SmartKeyErrorCode err)
+/**
+* setReplyResponse()
+* <here is function description>
+*
+* @param reply
+*   <perameter description>
+*
+* @param err
+*   <perameter description>
+*/
+void setReplyResponse (json_object* reply, SmartKeyErrorCode err)
 {
 	json_object_object_add(reply, "returnValue", json_object_new_boolean(err == SKERR_SUCCESS));
 
@@ -556,8 +702,15 @@ void setReplyResponse(json_object* reply, SmartKeyErrorCode err)
 }
 
 /**
- * Determine if a word looks enough like a URL to not be spell checked.
- */
+* wordIsUrl()
+* Determine if a word looks enough like a URL to not be spell checked.
+*
+* @param word
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmartKeyService::wordIsUrl(const std::string& word)
 {
 	const int len = int(word.length());
@@ -572,6 +725,16 @@ bool SmartKeyService::wordIsUrl(const std::string& word)
 	return false;
 }
 
+/**
+* wordIsAllPunctuation()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
 bool SmartKeyService::wordIsAllPunctuation(const std::string& word)
 {
 	std::string::const_iterator i;
@@ -584,10 +747,23 @@ bool SmartKeyService::wordIsAllPunctuation(const std::string& word)
 }
 
 /**
- * Strip the first and last characters (if they are punctuation) and return them.
- * If they are not punctuation then '\0' is returned.
- */
-std::string SmartKeyService::stripPunctuation(const std::string& word, std::string& leadingChars, std::string& trailingChars)
+* stripPunctuation()
+* Strip the first and last characters (if they are punctuation) and return word
+* If they are not punctuation then '\0' is returned.
+*
+* @param word
+*   <perameter description>
+*
+* @param leadingChars
+*   <perameter description>
+*
+* @param trailingChars
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
+std::string SmartKeyService::stripPunctuation (const std::string& word, std::string& leadingChars, std::string& trailingChars)
 {
 	leadingChars.clear();
 	trailingChars.clear();
@@ -623,6 +799,22 @@ std::string SmartKeyService::stripPunctuation(const std::string& word, std::stri
 }
 
 
+/**
+* restorePunctuation()
+* <here is function description>
+*
+* @param word
+*   <perameter description>
+*
+* @param leadingChars
+*   <perameter description>
+*
+* @param trailingChars
+*   <perameter description>
+*
+* @return std::string
+*   <return value description>
+*/
 std::string SmartKeyService::restorePunctuation(const std::string& word, const std::string& leadingChars, const std::string& trailingChars)
 {	// the following can be written in a single inefficient line. I prefer this, because string manipulations are expensive!
 	std::string answer;
@@ -868,8 +1060,20 @@ bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
     return true;
 }
 
-
-bool SmartKeyService::notifyUserDbChange(DbAction eAction, const std::string& word)
+/**
+* notifyUserDbChange()
+* <here is function description>
+*
+* @param eAction
+*   <perameter description>
+*
+* @param word
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::notifyUserDbChange (DbAction eAction, const std::string& word)
 {
 	if (word.empty())
 		return false;
@@ -895,7 +1099,20 @@ bool SmartKeyService::notifyUserDbChange(DbAction eAction, const std::string& wo
 	return succeeded;
 }
 
-bool SmartKeyService::notifyVolatileDbChange(DbAction eAction, const std::string& word)
+/**
+* notifyVolatileDbChange()
+* <here is function description>
+*
+* @param eAction
+*   <perameter description>
+*
+* @param word
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::notifyVolatileDbChange (DbAction eAction, const std::string& word)
 {
 	if (word.empty())
 		return false;
@@ -921,7 +1138,20 @@ bool SmartKeyService::notifyVolatileDbChange(DbAction eAction, const std::string
 	return succeeded;
 }
 
-bool SmartKeyService::notifyAutoReplaceDbChange(DbAction eAction, const AutoSubDatabase::Entry& entry)
+/**
+* notifyAutoReplaceDbChange()
+* <here is function description>
+*
+* @param eAction
+*   <perameter description>
+*
+* @param entry
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::notifyAutoReplaceDbChange (DbAction eAction, const AutoSubDatabase::Entry& entry)
 {
 	if (entry.shortcut.empty())
 		return false;
@@ -949,7 +1179,17 @@ bool SmartKeyService::notifyAutoReplaceDbChange(DbAction eAction, const AutoSubD
 	return succeeded;
 }
 
-bool SmartKeyService::notifyLanguageChanged(LanguageAction eAction)
+/**
+* notifyLanguageChanged()
+* <here is function description>
+*
+* @param eAction
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::notifyLanguageChanged (LanguageAction eAction)
 {
     if (eAction == LanguageActionNone)
         return false;
@@ -2092,14 +2332,34 @@ bool SmartKeyService::cmdExit(LSHandle* sh, LSMessage* message, void* ctx)
 	return true;
 }
 
-bool SmartKeyService::setPrefsCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* setPrefsCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::setPrefsCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	g_debug("Preferences saved");
 
 	return true;
 }
 
-void SmartKeyService::disableSpellingAutoCorrection()
+/**
+* disableSpellingAutoCorrection()
+* <here is function description>
+*/
+void SmartKeyService::disableSpellingAutoCorrection ()
 {
 	const std::string key("x_palm_textinput");
 	if (!m_currTextInputPrefs.empty()) {
@@ -2139,7 +2399,23 @@ void SmartKeyService::disableSpellingAutoCorrection()
 	}
 }
 
-bool SmartKeyService::carrierDbWatchCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* carrierDbWatchCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::carrierDbWatchCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	SmartKeyService* service = reinterpret_cast<SmartKeyService*>(ctx);
 
@@ -2177,7 +2453,14 @@ bool SmartKeyService::carrierDbWatchCallback(LSHandle *sh, LSMessage *message, v
 	return true;
 }
 
-bool SmartKeyService::cancelCarrierDbSettingsWatch()
+/**
+* cancelCarrierDbSettingsWatch()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::cancelCarrierDbSettingsWatch ()
 {
 	if (!m_carrierDbWatchToken)
 		return true;
@@ -2195,7 +2478,14 @@ bool SmartKeyService::cancelCarrierDbSettingsWatch()
 	return success;
 }
 
-bool SmartKeyService::addCarrierDbSettingsWatch()
+/**
+* addCarrierDbSettingsWatch()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::addCarrierDbSettingsWatch ()
 {
 	cancelCarrierDbSettingsWatch();
 	
@@ -2214,7 +2504,23 @@ bool SmartKeyService::addCarrierDbSettingsWatch()
 	return success;
 }
 
-bool SmartKeyService::carrierDbFindCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* carrierDbFindCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::carrierDbFindCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	SmartKeyService* service = reinterpret_cast<SmartKeyService*>(ctx);
 
@@ -2272,13 +2578,19 @@ bool SmartKeyService::carrierDbFindCallback(LSHandle *sh, LSMessage *message, vo
 	return true;
 }
 
-bool SmartKeyService::queryCarrierDbSettings()
+/**
+* queryCarrierDbSettings()
+*    // This sucks! Apparently some world-ready customers want text assist auto-correction disabled
+*    // but others don't. The problem is that they all have the same sweatshop build and only differ
+*    // by their carrier db. So this means that somebody needs to query this db and then set preference
+*    // values to a different default value if a certain carrier db value is present. More info
+*    // at CAS-16172 and NOV-110038 for more info.
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryCarrierDbSettings ()
 {
-	// This sucks! Apparently some world-ready customers want text assist auto-correction disabled
-	// but others don't. The problem is that they all have the same sweatshop build and only differ
-	// by their carrier db. So this means that somebody needs to query this db and then set preference
-	// values to a different default value if a certain carrier db value is present. More info
-	// at CAS-16172 and NOV-110038 for more info.
 	LSError lserror;
 	LSErrorInit(&lserror);
 
@@ -2295,9 +2607,22 @@ bool SmartKeyService::queryCarrierDbSettings()
 }
 
 /**
- * Called whenever one of our subscribed preference property changes.
- */
-bool SmartKeyService::queryPreferencesCallback(LSHandle *sh, LSMessage *message, void *ctx)
+* queryPreferencesCallback()
+* Called whenever one of our subscribed preference property changes.
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryPreferencesCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	if (!message)
 		return true;
@@ -2408,11 +2733,19 @@ bool SmartKeyService::queryPreferencesCallback(LSHandle *sh, LSMessage *message,
 }
 
 /**
- * Query the system service for our service preferences.
- *
- * @return true if successful, false if not.
- */
-bool SmartKeyService::queryPreferences()
+* queryPreferences()
+* Query the system service for our service preferences.
+*
+* @param
+*   <perameter description>
+*
+* @param
+*   <perameter description>
+*
+* @return bool
+*   true if successful, false if not.
+*/
+bool SmartKeyService::queryPreferences ()
 {
 	LSError error;
 	LSErrorInit(&error);
@@ -2430,10 +2763,14 @@ bool SmartKeyService::queryPreferences()
 }
 
 /**
- * Register with the luna service bus to be notified whenever the system service
- * status changes.
- */
-bool SmartKeyService::registerForSystemServiceStatus()
+* registerForSystemServiceStatus()
+* Register with the luna service bus to be notified whenever the system service
+* status changes.
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::registerForSystemServiceStatus ()
 {
 	LSError error;
 	LSErrorInit(&error);
@@ -2452,9 +2789,22 @@ bool SmartKeyService::registerForSystemServiceStatus()
 }
 
 /**
- * Called by luna-service with the system service status changes (connected/disconnected)
- */
-bool SmartKeyService::systemServiceStatusCallback(LSHandle *sh, LSMessage *message, void *ctx)
+* systemServiceStatusCallback()
+* Called by luna-service with the system service status changes (connected/disconnected)
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::systemServiceStatusCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	if (!message)
 		return true;
@@ -2481,7 +2831,23 @@ bool SmartKeyService::systemServiceStatusCallback(LSHandle *sh, LSMessage *messa
 	return true;
 }
 
-bool SmartKeyService::mojoDbServiceStatusCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* mojoDbServiceStatusCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::mojoDbServiceStatusCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	if (!message)
 		return true;
@@ -2510,7 +2876,14 @@ bool SmartKeyService::mojoDbServiceStatusCallback(LSHandle *sh, LSMessage *messa
 	return true;
 }
 
-bool SmartKeyService::registerForMojoDbStatus()
+/**
+* registerForMojoDbStatus()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::registerForMojoDbStatus ()
 {
 	LSError error;
 	LSErrorInit(&error);
@@ -2528,7 +2901,17 @@ bool SmartKeyService::registerForMojoDbStatus()
 	return ret;
 }
 
-bool SmartKeyService::Name::isValidName(const char * name)
+/**
+* isValidName()
+* <here is function description>
+*
+* @param *name
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::Name::isValidName (const char *name)
 {
 	// We add default contacts for "technical support" with names like
 	// #DATA, #411, etc. Filter these out.
@@ -2538,7 +2921,14 @@ bool SmartKeyService::Name::isValidName(const char * name)
 	return true;
 }
 
-void SmartKeyService::Name::addNames(const char * str)
+/**
+* addNames()
+* <here is function description>
+*
+* @param *str
+*   <perameter description>
+*/
+void SmartKeyService::Name::addNames (const char *str)
 {
 	//g_debug("addNames: %s", str.c_str());
 	const char * cstr = str;
@@ -2566,7 +2956,20 @@ void SmartKeyService::Name::addNames(const char * str)
 	}
 }
 
-bool SmartKeyService::parseName(json_object* objName, Name& name )
+/**
+* parseName()
+* <here is function description>
+*
+* @param *objName
+*   <perameter description>
+*
+* @param name
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::parseName (json_object* objName, Name& name )
 {
 	json_object* value = json_object_object_get(objName, "familyName");
 	if (ValidJsonObject(value)) {
@@ -2586,7 +2989,23 @@ bool SmartKeyService::parseName(json_object* objName, Name& name )
 	return true;
 }
 
-bool SmartKeyService::queryPersonsCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* queryPersonsCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryPersonsCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	if (!message)
 		return true;
@@ -2656,7 +3075,23 @@ bool SmartKeyService::queryPersonsCallback(LSHandle *sh, LSMessage *message, voi
     return true;
 }
 
-bool SmartKeyService::queryCountPersonCallback(LSHandle *sh, LSMessage *message, void *ctx)
+/**
+* queryCountPersonCallback()
+* <here is function description>
+*
+* @param *sh
+*   <perameter description>
+*
+* @param *message
+*   <perameter description>
+*
+* @param *ctx
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryCountPersonCallback (LSHandle *sh, LSMessage *message, void *ctx)
 {
 	if (!message)
 		return true;
@@ -3097,7 +3532,17 @@ bool SmartKeyService::cmdUpdateWordUsage(LSHandle* sh, LSMessage* message, void*
 	return true;
 }
 
-bool SmartKeyService::queryPersons(const std::string& page)
+/**
+* queryPersons()
+* <here is function description>
+*
+* @param page
+*   <perameter description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryPersons (const std::string& page)
 {
 	LSError error;
 	LSErrorInit(&error);
@@ -3118,7 +3563,14 @@ bool SmartKeyService::queryPersons(const std::string& page)
 	return ret;
 }
 
-bool SmartKeyService::queryPersonsCount()
+/**
+* queryPersonsCount()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::queryPersonsCount ()
 {
 	LSError error;
 	LSErrorInit(&error);
@@ -3132,20 +3584,39 @@ bool SmartKeyService::queryPersonsCount()
     return ret;
 }
 
-void SmartKeyService::enable(bool on)
+/**
+* enable()
+* <here is function description>
+*
+* @param on
+*   <perameter description>
+*/
+void SmartKeyService::enable (bool on)
 {
 	m_isEnabled = on;
 
 	g_message("%s: SmartKeyService is %s", __FUNCTION__, m_isEnabled ? "enabled" : "disabled");
 }
 
-bool SmartKeyService::isEnabled() {
-	return m_isEnabled;
+/**
+* isEnabled()
+* <here is function description>
+*
+* @return bool
+*   <return value description>
+*/
+bool SmartKeyService::isEnabled()
+{
+    return m_isEnabled;
 }
 
 /**
- * Return the current UNIX epoch time.
- */
+* getTime()
+* Return the current UNIX epoch time.
+*
+* @return double
+*   <return value description>
+*/
 double SmartKeyService::getTime()
 {
 	struct timespec curTime;
