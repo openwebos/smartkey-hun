@@ -86,7 +86,30 @@ std::string SmkyUserDatabase::getDbPath() const
 SMKY_STATUS SmkyUserDatabase::init()
 {
 	g_assert(m_pDatabaseData == NULL);
-	return SMKY_STATUS_NO_MEMORY;
+	m_pDatabaseData = static_cast<uint8_t*>(calloc(k_DatabaseSize, sizeof(uint8_t)));
+	if (NULL == m_pDatabaseData)
+		return SMKY_STATUS_NO_MEMORY;
+
+	std::string path = getDbPath();
+	if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS)) {
+		size_t size = SmartKeyService::fileSize(path);
+		if (size != InvalidFileSize) {
+			if (size <= k_DatabaseSize) {
+				int fd = open(path.c_str(), O_RDONLY);
+				if (-1 != fd) {
+					ssize_t bytesRead = read(fd, m_pDatabaseData, size);
+					close(fd);
+					if (static_cast<size_t>(bytesRead) != size) {
+						memset(m_pDatabaseData, 0, k_DatabaseSize);
+					}
+				}
+			}
+		}
+	}
+
+    // TODO:  initialize m_lingInfo from m_pDatabaseData
+	
+	return SKERR_SUCCESS;
 }
 
 /**
@@ -163,6 +186,7 @@ SmartKeyErrorCode SmkyUserDatabase::findWord(const std::string& word) const
 	if (word.empty())
 		return SKERR_BAD_PARAM;
 
+    // TODO:  Look word up in m_lingInfo
 	return smkyErrorToSmartKeyError(SMKY_STATUS_NO_MATCHING_WORDS);
 }
 
@@ -180,6 +204,11 @@ SmartKeyErrorCode SmkyUserDatabase::learnWord(const std::string& word)
 {
 	if (word.empty())
 		return SKERR_BAD_PARAM;
+
+    // TODO:
+    //  a)  Look word up in m_lingInfo, return WORD_EXISTS error code if found
+    //  b)  If word doesn't exist, add it to m_lingInfo
+    //  c)  Return true status
 
 	return SKERR_SUCCESS;
 }
@@ -199,6 +228,11 @@ SmartKeyErrorCode SmkyUserDatabase::forgetWord(const std::string& word)
 	if (word.empty())
 		return SKERR_BAD_PARAM;
 
+    // TODO:
+    //  a)  Delete word from m_lingInfo
+    //  b)  Return true status
+
+
 	return SKERR_SUCCESS;
 }
 
@@ -215,6 +249,11 @@ SmartKeyErrorCode SmkyUserDatabase::forgetWord(const std::string& word)
 SmartKeyErrorCode SmkyUserDatabase::loadEntries(std::list<std::string>& entries) const
 {
 	entries.clear();
+
+    // TODO:
+    //  a)  Read all words from m_lingInfo and add each to the entries list
+    //  b)  Return true status
+
 
 	return SKERR_SUCCESS;
 }
@@ -242,7 +281,25 @@ SmartKeyErrorCode SmkyUserDatabase::getEntries(int offset, int limit, std::list<
 
 	entries.clear();
 
-	return SKERR_SUCCESS;
+	// Inefficient to load all entries into RAM, but we need to return a sorted list
+	std::list<std::string> allEntries;
+	SmartKeyErrorCode err = loadEntries(allEntries);
+	if (err == SKERR_SUCCESS) {
+
+		allEntries.sort(StringUtils::compareStrings);
+		std::list<std::string>::const_iterator i = allEntries.begin();
+		// Skip up to the offset
+		while (i != allEntries.end() && offset-- > 0) {
+			++i;
+		}
+
+		// Now read the entries
+		while (i != allEntries.end() && limit-- > 0) {
+			entries.push_back(*i++);
+		}
+	}
+
+	return err;
 }
 
 /**
@@ -258,6 +315,11 @@ SmartKeyErrorCode SmkyUserDatabase::getEntries(int offset, int limit, std::list<
 SmartKeyErrorCode SmkyUserDatabase::getNumEntries (int& entries)
 {
 	entries = 0;
+
+    // TODO:
+    //  a)  Get a count of words from m_lingInfo
+    //  b)  Return true status
+
 	return SKERR_SUCCESS;
 }
 
@@ -313,6 +375,13 @@ SmartKeyErrorCode SmkyUserDatabase::updateWordUsage (const std::string& word)
 {
 	if (word.empty())
 		return SKERR_BAD_PARAM;
+
+    // TODO:
+    //  a)  Update m_lingInfo with usage of this word
+    //  b)  Note:  This only necessary if the dictionary system, collects statistics on word usage
+    //  c)  Return true status
+
+
 	return SKERR_SUCCESS;
 }
 

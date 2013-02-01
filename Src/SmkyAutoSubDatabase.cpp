@@ -181,6 +181,14 @@ void SmkyAutoSubDatabase::matchGuessCaseToInputWord (const uint16_t* inputWord, 
 */
 SMKY_STATUS SmkyAutoSubDatabase::findEntry (const gunichar2* shortcut, uint16_t shortcutLen, std::string& substitution)
 {
+
+    // TODO:
+    //  a)  Look short-cut up in m_lingInfo
+    //  b)  If found, make sure case of substitution matches input using matchGuessCaseToInputWord()
+    //  c)  If not found, check the hardcode entries list m_hardCodedEntries
+    //  d)  If found in hard coded list make sure case of substitution matches input
+    //  e)  Return true status
+
     return SMKY_STATUS_NONE;
 }
 
@@ -196,6 +204,12 @@ SMKY_STATUS SmkyAutoSubDatabase::findEntry (const gunichar2* shortcut, uint16_t 
 */
 std::string SmkyAutoSubDatabase::findEntry (const std::string& shortcut)
 {
+
+    // TODO:
+    //  a)  Wrapper around the other findEntry() method
+    //  b)  If found, return the substitution
+    //  c)  If not found, return empty string
+
 	return "";
 }
 
@@ -211,6 +225,11 @@ std::string SmkyAutoSubDatabase::findEntry (const std::string& shortcut)
 */
 SmartKeyErrorCode SmkyAutoSubDatabase::addEntry (const Entry& entry)
 {
+
+    // TODO:
+    //  a)  Wrapper for other addEntry method
+    //  b)  Return true status
+
     return SKERR_SUCCESS;
 }
 
@@ -229,15 +248,29 @@ SmartKeyErrorCode SmkyAutoSubDatabase::addEntry (const Entry& entry)
 */
 SMKY_STATUS SmkyAutoSubDatabase::addEntry(const std::string& shortcut, const std::string& substitution)
 {
+    // TODO:
+    //  a)  Add short-cut and substitution to m_lingInfo
+    //  b)  Return true status
+
     return SMKY_STATUS_NONE;
 }
 
 /**
- * Loads <b>all</b> user entries into the provided list - unsorted.
- */
+* compare_entries()
+* Loads <b>all</b> user entries into the provided list - unsorted.
+* 
+* @param which 
+*     defines type of entry:  UserEntries or StockEntries
+*/
 SMKY_STATUS SmkyAutoSubDatabase::loadEntries(WhichEntries which, std::list<Entry>& entries) const
 {
     entries.clear();
+
+    // TODO:
+    //  a)  Read though m_lingInfo for type of entry
+    //  b)  Each entry in list is a pair of shortcut and substitution
+    //  c)  Write to entries list
+    //  d)  Return true status
 
     return SMKY_STATUS_NONE;
 }
@@ -294,8 +327,9 @@ SmartKeyErrorCode SmkyAutoSubDatabase::getEntries(int offset, int limit, WhichEn
 * getNumEntries()
 * Return the number of user entries
 *
-* @param which
-*   <perameter description>
+* 
+* @param which 
+*     defines type of entry:  UserEntries or StockEntries
 *
 * @param entries
 *   <perameter description>
@@ -306,6 +340,10 @@ SmartKeyErrorCode SmkyAutoSubDatabase::getEntries(int offset, int limit, WhichEn
 SmartKeyErrorCode SmkyAutoSubDatabase::getNumEntries (WhichEntries which, int& entries)
 {
 	entries = 0;
+
+    // TODO:
+    //  a)  Get the number of entries of the specified type from m_lingInfo
+    //  b)  Return true status
 
     return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_NONE);
 }
@@ -319,6 +357,10 @@ SmartKeyErrorCode SmkyAutoSubDatabase::getNumEntries (WhichEntries which, int& e
 */
 SMKY_STATUS SmkyAutoSubDatabase::duplicateShortEntries()
 {
+
+    // TODO:
+    //  a)  This may not been needed with HunSpell, so perhaps no action
+
     return SMKY_STATUS_NONE;
 }
 
@@ -403,7 +445,51 @@ SMKY_STATUS SmkyAutoSubDatabase::loadHardCodedEntries()
 */
 SMKY_STATUS SmkyAutoSubDatabase::init()
 {
-   return SMKY_STATUS_NO_MEMORY;
+    g_assert(m_pDatabaseData == NULL);
+	m_pDatabaseData = static_cast<uint8_t*>(calloc(k_DatabaseSize, sizeof(uint8_t)));
+	if (NULL == m_pDatabaseData)
+		return SMKY_STATUS_NO_MEMORY;
+
+	m_createdDatabase = true;
+	std::string path = getDbPath();
+	if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS)) {
+		size_t size = SmartKeyService::fileSize(path);
+		if (size != InvalidFileSize) {
+			if (size <= k_DatabaseSize) {
+				int fd = open(path.c_str(), O_RDONLY);
+				if (-1 != fd) {
+					ssize_t bytesRead = read(fd, m_pDatabaseData, size);
+					close(fd);
+					if (static_cast<size_t>(bytesRead) != size) {
+						memset(m_pDatabaseData, 0, k_DatabaseSize);
+					}
+					else {
+						m_createdDatabase = false;
+					}
+				}
+			}
+		}
+	}
+
+    //
+    // TODO: Initialize m_lingInfo from m_pDatabaseData
+    //
+
+	if (m_createdDatabase) {
+		g_message("First time creating auto-sub database for locale %s. Loading default data...", m_locale.getFullLocale().c_str());
+		loadDefaultData();
+	}
+	else {
+		g_debug("Just loaded auto-sub database for locale %s.", m_locale.getFullLocale().c_str());
+	}
+
+	if (wStatus == SMKY_STATUS_NONE)
+		cacheLdbEntries();
+
+	if (wStatus == SMKY_STATUS_NONE)
+		loadHardCodedEntries();
+
+   return wStatus;
 }
 
 /**
@@ -477,6 +563,11 @@ SMKY_STATUS SmkyAutoSubDatabase::saveDb()
 SmartKeyErrorCode SmkyAutoSubDatabase::forgetWord(const std::string& shortcut)
 {
 	SMKY_STATUS wStatus;
+	
+    // TODO:
+    //  a)  Delete shortcut from m_lingInfo
+    //  b)  Return true status
+	
 	wStatus = SMKY_STATUS_NO_MEMORY;
 
 	return SmkyUserDatabase::smkyErrorToSmartKeyError(wStatus);

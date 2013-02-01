@@ -62,6 +62,7 @@ SmkyManufacturerDatabase::SmkyManufacturerDatabase(SMKY_LINFO& lingInfo, const S
 
 	g_debug("Loaded %u universal words.", m_universalWords.size());
 
+	// TODO:  Register manufacturer database callback with m_lingInfo:  ManufacturerDbCallback
 }
 
 /**

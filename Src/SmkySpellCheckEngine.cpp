@@ -37,6 +37,9 @@
 #include "SmartKeyService.h"
 #include "SpellCheckClient.h"
 
+// TODO:  This is where we define different keyboard layouts, if we can use this information.
+//      Probably not relevant for HunSpell
+
 const uint16_t INVALID_KDB = -1;
 
 // We only ever use the first page of our keyboard db's (at least for now).
@@ -70,6 +73,8 @@ SmkySpellCheckEngine::SmkySpellCheckEngine(const Settings& settings) :
 	, m_keyboardIsVirtual(false)
 {
 
+    // TODO:  Do we also need to initialize m_lingInfo, m_lingCommonInfo, m_sWordSymbInfo, m_pSelList, m_sKdbInfo
+
 	g_pSettings = &settings;
 	
 	m_wSmkyInitStatus = init();
@@ -100,6 +105,12 @@ SmkySpellCheckEngine::~SmkySpellCheckEngine()
 */
 SMKY_STATUS SmkySpellCheckEngine::init()
 {
+
+    // TODO:  
+    // a)  Initialize m_lingInfo, m_lingCommonInfo, &m_sWordSymbInfo
+    // b)  Initialize m_userDb  (UserDatabase)
+    // c)  Initialize m_manDb  (ManufacturerDatabase)
+
 	return SMKY_STATUS_NONE;
 }
 
@@ -160,6 +171,19 @@ bool SmkySpellCheckEngine::wordIsAllDigits(const std::string& word)
 SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling(const std::string& word, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
+
+    // TODO:
+    //  a) If current languuage not supported in a loaded dictionary, set result.inDictionary=true; and return success
+    //  b) If whitelist is non-empty. check it.  If found set result.inDictionary=true; and return success
+    //  c) Check word in auto sub dictionary. 
+    //         If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+    //  d) If word is all digits, set result.inDictionary=true; and return success
+    //  e) If no result found look word up in dictionaries
+    //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
+    //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
+    //      otherwise select best matching guess for autoaccept flag
+    //  h) Return valid error code
+
     return SKERR_SUCCESS;
 }
 
@@ -186,6 +210,19 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling(const std::string& word, S
 SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, const std::string& context, SpellCheckWordInfo& result, int maxGuesses)
 {
 	result.clear();
+
+    // TODO:
+    //  a) If current languuage not supported in a loaded dictionary, set result.inDictionary=true; and return success
+    //  b) If whitelist is non-empty. check it.  If found set result.inDictionary=true; and return success
+    //  c) Check word in auto sub dictionary. 
+    //         If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+    //  d) If word is all digits, set result.inDictionary=true; and return success
+    //  e) If no result found look word up in dictionaries
+    //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
+    //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
+    //      otherwise select best matching guess for autoaccept flag
+    //  h) Return valid error code
+
 	return SKERR_SUCCESS;
 }
 
@@ -217,6 +254,8 @@ SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, con
 SMKY_STATUS SmkySpellCheckEngine::typeWord (const uint16_t *word, uint16_t wordLength)
 {
     SMKY_STATUS wStatus = SMKY_STATUS_NONE;
+    
+    // TODO:  This may not be necessary to support with HunSpell
     return wStatus;
 }
 
@@ -273,6 +312,8 @@ SmartKeyErrorCode SmkySpellCheckEngine::processTaps (const TapDataArray& taps, S
 {
 	result.clear();
 
+    // TODO:  What does this do?
+
 	return SKERR_SUCCESS;
 }
 
@@ -319,6 +360,12 @@ SmartKeyErrorCode SmkySpellCheckEngine::getCompletion (const std::string& prefix
 
 	if (prefix.empty())
 		return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_BAD_PARAM);
+
+    //  TODO:  This may not be necessary, but just in case:
+    //  a) If all digits, don't try to complete
+    //  b) If there's a match in the auto sub database, use that
+    //  c) Otherwise lookup the prefix (partially entered string) in the dictionaries to get an autocompletion match, if there is one
+    //  d) Return valid error code
 
 	return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_NONE);
 }
@@ -429,8 +476,10 @@ SMKY_STATUS SmkySpellCheckEngine::LanguageInfo::initLanguage()
 {
 	if (m_initAttempted)
 		return m_langLoadStatus;
-
 	m_initAttempted = true;
+
+
+   // TODO:  validate language in dictionary, and return valid status
 
 	return (m_langLoadStatus = SMKY_STATUS_NONE);
 }
