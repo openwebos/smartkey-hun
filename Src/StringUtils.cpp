@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,96 +32,96 @@
 #include <glib.h>
 #include <stdio.h>
 
-namespace SmartKey
-{
+using namespace SmartKey;
 
 /**
-* chomp()
-* <here is function description>
+* chomp
 *
 * @param *str
-*   <perameter description>
+*   input string
 *
 * @param numChars
-*   <perameter description>
+*   number of chars in string
 */
-void StringUtils::chomp(char* str, size_t numChars)
+void StringUtils::chomp (char* str, size_t numChars)
 {
-	while (*str != '\0' && numChars--) {
-		if (*str == '\n' || *str == '\r') {
-			*str = '\0';
-			return;
-		}
-		str++;
-	}
+    while (*str != '\0' && numChars--)
+    {
+        if (*str == '\n' || *str == '\r')
+        {
+            *str = '\0';
+            return;
+        }
+        str++;
+    }
 }
 
 /**
-* compareStrings()
-* <here is function description>
+* compare strings
 *
 * @param first
-*   <perameter description>
+*   first string
 *
 * @param second
-*   <perameter description>
+*   second string
 *
 * @return bool
-*   <return value description>
+*   true if first string is less than second
 */
 bool StringUtils::compareStrings (const std::string& first, const std::string& second)
 {
-	UnicodeString uFirst  = StringUtils::utf8StringToUnicodeString(first);
-	UnicodeString uSecond = StringUtils::utf8StringToUnicodeString(second);
+    UnicodeString uFirst  = StringUtils::utf8StringToUnicodeString(first);
+    UnicodeString uSecond = StringUtils::utf8StringToUnicodeString(second);
 
-	StringUtils::transliterate(uFirst);
-	StringUtils::transliterate(uSecond);
+    StringUtils::transliterate(uFirst);
+    StringUtils::transliterate(uSecond);
 
-	uFirst.toLower();
-	uSecond.toLower();
+    uFirst.toLower();
+    uSecond.toLower();
 
-	return uFirst < uSecond;
+    return uFirst < uSecond;
 }
 
 /**
-* transliterate()
-* <here is function description>
+* transliterate
 *
 * @param str
-*   <perameter description>
+*   input unicode string
 *
 * @return bool
-*   <return value description>
+*   true if done
 */
 bool StringUtils::transliterate (UnicodeString& str)
 {
-	UParseError parseError = { 0 };
-	UErrorCode lStatus    = U_ZERO_ERROR;
-	static icu::Transliterator* pTransliterator = 0;
+    UParseError parseError = { 0 };
+    UErrorCode lStatus    = U_ZERO_ERROR;
+    static icu::Transliterator* pTransliterator = 0;
 
-	if (pTransliterator == NULL) {
-		pTransliterator = icu::Transliterator::createInstance("NFD; [:M:] Remove; NFC;", UTRANS_FORWARD, parseError, lStatus);
-		if ((pTransliterator == 0) || U_FAILURE(lStatus)) {
-			return false;
-		}
-		else {
-			icu::Transliterator::registerInstance(pTransliterator);
-		}
-	}
+    if (pTransliterator == NULL)
+    {
+        pTransliterator = icu::Transliterator::createInstance("NFD; [:M:] Remove; NFC;", UTRANS_FORWARD, parseError, lStatus);
+        if ((pTransliterator == 0) || U_FAILURE(lStatus))
+        {
+            return false;
+        }
+        else
+        {
+            icu::Transliterator::registerInstance(pTransliterator);
+        }
+    }
 
-	pTransliterator->transliterate(str);
-	return true;
+    pTransliterator->transliterate(str);
+    return true;
 }
 
 /**
-* utf8tolower()
-* <here is function description>
+* convert string utf8 to lower
 *
 * @param str
-*   <perameter description>
+*   input string
 *
 * @return std::string
-*   <return value description>
+*   converted string
 */
 std::string StringUtils::utf8tolower (const std::string& str)
 {
@@ -128,7 +129,8 @@ std::string StringUtils::utf8tolower (const std::string& str)
     lowerStr.reserve(str.size());
     gchar buffer[6];    // for individual conversions from gunichar to utf8
     const gchar * cstr = str.c_str();
-    while (*cstr) {
+    while (*cstr)
+    {
         gunichar c = g_unichar_tolower(g_utf8_get_char(cstr));
         if (!c)
             break;
@@ -140,75 +142,76 @@ std::string StringUtils::utf8tolower (const std::string& str)
 }
 
 /**
-* utf8StringToUnicodeString()
-* <here is function description>
+* convert utf8 string to unicode string
 *
 * @param str
-*   <perameter description>
+*   input string
 *
 * @return UnicodeString
-*   <return value description>
+*   converted string
 */
 UnicodeString StringUtils::utf8StringToUnicodeString (const std::string& str)
 {
-	if (str.empty())
-		return UnicodeString();
+    if (str.empty())
+        return UnicodeString();
 
-	glong len(0);
-	auto_g_free_array<gunichar2> utf16 = g_utf8_to_utf16(str.c_str(), -1, NULL, &len, NULL);
-	if (utf16 != NULL) {
-		UnicodeString ustr(utf16.p);
-		return ustr;
-	}
-	else {
-		return UnicodeString();
-	}
+    glong len(0);
+    auto_g_free_array<gunichar2> utf16 = g_utf8_to_utf16(str.c_str(), -1, NULL, &len, NULL);
+    if (utf16 != NULL)
+    {
+        UnicodeString ustr(utf16.p);
+        return ustr;
+    }
+    else
+    {
+        return UnicodeString();
+    }
 }
 
 /**
-* string_printf()
-* <here is function description>
+* print string
 *
 * @param *format
-*   <perameter description>
+*   format of output
 *
 * @param ...
-*   <perameter description>
+*   float number of parameters
 *
 * @return std::string
-*   <return value description>
+*   return string
 */
 std::string string_printf(const char *format, ...)
 {
-	if (format == 0)
-		return "";
-	va_list args;
-	va_start(args, format);
-	char stackBuffer[1024];
-	int result = vsnprintf(stackBuffer, G_N_ELEMENTS(stackBuffer), format, args);
-	if (result > -1 && result < (int) G_N_ELEMENTS(stackBuffer))
-	{	// stack buffer was sufficiently large. Common case with no temporary dynamic buffer.
-		va_end(args);
-		return std::string(stackBuffer, result);
-	}
+    if (format == 0)
+        return "";
+    va_list args;
+    va_start(args, format);
+    char stackBuffer[1024];
+    int result = vsnprintf(stackBuffer, G_N_ELEMENTS(stackBuffer), format, args);
+    if (result > -1 && result < (int) G_N_ELEMENTS(stackBuffer))
+    {
+        // stack buffer was sufficiently large. Common case with no temporary dynamic buffer.
+        va_end(args);
+        return std::string(stackBuffer, result);
+    }
 
-	int length = result > -1 ? result + 1 : G_N_ELEMENTS(stackBuffer) * 3;
-	char * buffer = 0;
-	do
-	{
-		if (buffer)
-		{
-			delete[] buffer;
-			length *= 3;
-		}
-		buffer = new char[length];
-		result = vsnprintf(buffer, length, format, args);
-	} while (result == -1 && result < length);
-	va_end(args);
-	std::string	str(buffer, result);
-	delete[] buffer;
-	return str;
+    int length = result > -1 ? result + 1 : G_N_ELEMENTS(stackBuffer) * 3;
+    char * buffer = 0;
+    do
+    {
+        if (buffer)
+        {
+            delete[] buffer;
+            length *= 3;
+        }
+        buffer = new char[length];
+        result = vsnprintf(buffer, length, format, args);
+    }
+    while (result == -1 && result < length);
+    va_end(args);
+    std::string	str(buffer, result);
+    delete[] buffer;
+    return str;
 }
 
-}  // namespace SmartKey
 

@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,78 +20,93 @@
 #ifndef SMKY_MAN_DATABASE_H
 #define SMKY_MAN_DATABASE_H
 
-#include "SmkyMockImplementation.h"
-#include "SmkyDatabase.h"
+#include "Database.h"
 #include <string>
-#include <map>
 #include "StringUtils.h"
-#include <hunspell/hunspell.hxx>
+#include "SmkyKeywordsBundle.h"
 
 namespace SmartKey
 {
 
-class Settings;
-
 /**
  * Wraps an  Manufacturer database.
  */
-class SmkyManufacturerDatabase : public SmkyDatabase
+class SmkyManufacturerDatabase
 {
+private:
+    SmkyKeywordsBundle m_dictionary;
+
 public:
 
-	SmkyManufacturerDatabase(SMKY_LINFO& lingInfo, const Settings& settings);
+    SmkyManufacturerDatabase (void);
+    virtual ~SmkyManufacturerDatabase (void);
 
-	virtual ~SmkyManufacturerDatabase();
+    //add word
+    virtual void learnWord (const std::string& word);
 
-	virtual SmartKeyErrorCode learnWord(const std::string& word);
-	virtual SmartKeyErrorCode forgetWord(const std::string& word);
-	virtual SmartKeyErrorCode save();
-	virtual SmartKeyErrorCode setLocaleSettings(const LocaleSettings& localeSettings);
-	virtual SmartKeyErrorCode setExpectedCount(int count);
+    //remove word
+    virtual bool forgetWord (const std::string& word);
 
-	void logStatistics() const;
+    //find
+    virtual bool findEntry (const std::string& word);
 
-	void setQuery(const std::string & query);			// make query to hunspell to be return only relevant terms
-	void setFistAndLastLetters(const std::string & firstLetters, const std::string & lastLetters, int minLength);
-	bool getExactMatch(std::string & outExactMatch);	// from the last query, find the exact match if any...
+    //save dictionary
+    virtual SmartKeyErrorCode save (void);
+
+    //notification about locale change
+    virtual void changedLocaleSettings (void);
+
+    //--
+    virtual SmartKeyErrorCode setExpectedCount (int count); //?
 
 private:
 
-	SMKY_STATUS loadDefaultData(const LocaleSettings& localeSettings);
-	SMKY_STATUS loadWords(const char * path, std::list<std::string> & wordList);
+    //get path to locale independent dictionary
+    std::string _getIndependDbPath (void) const;
 
-	SMKY_STATUS dbCallback( SMKY_REQ_MODE eMdbRequestType,
-		uint16_t    wWordLen,
-		uint16_t    wMaxWordLen,
-		uint16_t  *psBuildTxtBuf,
-		uint16_t   *pwActWordLen,
-		uint32_t   *pdwWordListIdx);
+    //get path to locale dependent dictionary
+    std::string _getDependDbPath (void) const;
 
-	static SMKY_STATUS ManufacturerDbCallback(
-		SMKY_LINFO *pLingInfo,
-		SMKY_REQ_MODE eMdbRequestType,
-		uint16_t    wWordLen,
-		uint16_t    wMaxWordLen,
-		uint16_t  *psBuildTxtBuf,
-		uint16_t   *pwActWordLen,
-		uint32_t   *pdwWordListIdx);
+    //
+    SmartKeyErrorCode _loadDefaultData (void);
 
-	void	createHunspellDictionary();
-	void	deleteHunspellDictionary();
+    //
+    SmartKeyErrorCode _loadWords (const char * path, std::list<std::string> & wordList);
 
-	std::map<std::string, int>	m_words;			///< The word mapped to the number of times it's used.
-	std::list<std::string>      m_stockManDbWords;	///< The words we load from our text files that are hard-coded entries.
-	std::list<std::string>		m_universalWords;	///< The words we load four a text file that are hard-coded entries for ALL locales.
-	const Settings& m_settings;
-	Hunspell *					m_hunspell;
-	int							m_hunspellSize;
-	int							m_expectedContactCount;	///< How many countacts do we expect to have, to help hunspell create a properly sized hashmap
-
-	char **						m_lastHunspellResult;
-	int							m_lastHunspellResultCount;
-	std::string					m_lastHunspellQuery;
-	std::vector<const char *>	m_lastFirstLastLetterResults;
 };
+
+/**
+* get path to locale independent dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyManufacturerDatabase::_getIndependDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_MANUFACTURER, Settings::DICT_LOCALE_INDEPEND));
+}
+
+/**
+* get path to locale dependent dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyManufacturerDatabase::_getDependDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_MANUFACTURER, Settings::DICT_LOCALE_DEPEND));
+}
+
+/**
+ * find
+ *
+* @return bool
+*   true if found
+ */
+inline bool SmkyManufacturerDatabase::findEntry (const std::string& word)
+{
+    return(m_dictionary.find(word));
+}
 
 }
 

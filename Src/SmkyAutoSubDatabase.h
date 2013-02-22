@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -21,60 +22,171 @@
 
 #include <glib.h>
 #include <stdint.h>
-#include <map>
-#include "SmkyDatabase.h"
-
+#include "Database.h"
+#include "SmkyFilePairs.h"
+#include "SmkyKeywordsBundle.h"
 
 namespace SmartKey
 {
 
-class Settings;
-
 /**
  * Wraps the auto substitute database.
  */
-class SmkyAutoSubDatabase : public AutoSubDatabase, public SmkyDatabase
+class SmkyAutoSubDatabase
 {
+private:
+
+    //auto replace - can be modified by user
+    SmkyFilePairs m_autosub_dictionary;
+
+    //auto replace hc
+    SmkyFilePairs m_autosub_hc_dictionary;
+
 public:
-	SmkyAutoSubDatabase(SMKY_LINFO& lingInfo, const LocaleSettings& localeSettings, const Settings& settings);
-	virtual ~SmkyAutoSubDatabase();
+    SmkyAutoSubDatabase (void);
+    virtual ~SmkyAutoSubDatabase (void);
 
-	SMKY_STATUS	init();
+    //is used default locale?
+    bool isUsedDefault (void);
 
-	virtual SmartKeyErrorCode learnWord(const std::string& word) { return SKERR_FAILURE; }
-	virtual SmartKeyErrorCode forgetWord(const std::string& word);
-	virtual SmartKeyErrorCode addEntry(const Entry& entry);
-	virtual SmartKeyErrorCode getEntries(int offset, int limit, WhichEntries which, std::list<Entry>& entries);
-	virtual SmartKeyErrorCode getNumEntries(WhichEntries which, int& entries);
-	virtual SmartKeyErrorCode save();
-	virtual SmartKeyErrorCode setLocaleSettings(const LocaleSettings& localeSettings);
-	SMKY_STATUS findEntry(const gunichar2* shortcut, uint16_t shortcutLen, std::string& substitution);
-	virtual std::string findEntry(const std::string& shortcut);
-	bool didCreateDatabase() const;
-	std::string getLdbSubstitution(const std::string& shortcut) const;
-	std::string getHardCodedSubstitution(const std::string& shortcut) const;
+    //init
+    SmartKeyErrorCode init (void);
+
+    //learn word
+    virtual void learnWord (const std::string& word);
+
+    //forget word
+    virtual bool forgetWord (const std::string& word);
+
+    //add entry
+    virtual SmartKeyErrorCode addEntry (const Entry& entry);
+
+    //get entries
+    virtual SmartKeyErrorCode getEntries (int offset, int limit, WhichEntries which, std::list<Entry>& entries);
+
+    //get num entries
+    virtual SmartKeyErrorCode getNumEntries (WhichEntries which, int& entries);
+
+    //save
+    virtual SmartKeyErrorCode save (void);
+
+    //notify about locale change
+    virtual void changedLocaleSettings (void);
+
+    //find entry
+    virtual std::string findEntry (const std::string& shortcut);
+
+    //get ldb substitution
+    std::string getLdbSubstitution (std::string& shortcut);
+
+    //get hardcoded substitution
+    std::string getHardCodedSubstitution (std::string& shortcut);
 
 private:
 
-	static void matchGuessCaseToInputWord(const uint16_t* inputWord, uint16_t inputLen, uint16_t* guess, uint16_t guessLen);
-	static bool isWordAllUppercase(const uint16_t* word, uint16_t wordLen);
-	SMKY_STATUS duplicateShortEntries();
-	SMKY_STATUS loadDefaultData();
-	SMKY_STATUS loadHardCodedEntries();
-	SMKY_STATUS loadEntries(WhichEntries which, std::list<Entry>& entries) const;
-	SMKY_STATUS cacheLdbEntries();
+    //get path to dictionary
+    string _getDbPath (void) const;
 
-	SMKY_STATUS addEntry(const std::string& shortcut, const std::string& substitution);
-	std::string getDbPath() const;
-	SMKY_STATUS	saveDb();
+    //get path to hc-dictionary
+    string _getHcDbPath (void) const;
 
-	const Settings& m_settings;
-	uint8_t*      m_pDatabaseData;
-	bool        m_createdDatabase;
-	LocaleSettings m_locale;
-	std::map<std::string,std::string>	m_ldbEntries;
-	std::map<std::string,std::string>	m_hardCodedEntries;
+    //test word
+    static bool isWordAllUppercase (const uint16_t* word, uint16_t wordLen);
+
+    //load
+    SmartKeyErrorCode loadEntries (WhichEntries which, std::list<Entry>& entries);
+
 };
+
+/**
+* get path to dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyAutoSubDatabase::_getDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_AUTOSUB));
+}
+
+/**
+* get path to hc-dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyAutoSubDatabase::_getHcDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_AUTOSUB_HC));
+}
+
+/**
+* add a new word
+*
+* @param word
+*   word
+*/
+inline void SmkyAutoSubDatabase::learnWord (const std::string& word)
+{
+    g_debug("SmkyAutoSubDatabase::learnWord isn't supported");
+}
+
+/**
+* remove word
+*
+* @param shortcut
+*   word
+*/
+inline bool SmkyAutoSubDatabase::forgetWord (const std::string& shortcut)
+{
+    return(m_autosub_dictionary.remove(shortcut));
+}
+
+/**
+* find entry pair
+*
+* @param shortcut
+*   word to find
+*
+* @return std::string
+*   pair word
+*/
+inline std::string SmkyAutoSubDatabase::findEntry (const std::string& shortcut)
+{
+    std::string retval = m_autosub_dictionary.find(shortcut);
+
+    if( retval.length() == 0 )
+        return(m_autosub_hc_dictionary.find(shortcut));
+
+    return( retval );
+}
+
+/**
+* add word
+*
+* @param entry
+*   word to add
+*
+* @return SmartKeyErrorCode
+*   return SKERR_SUCCESS always
+*/
+inline SmartKeyErrorCode SmkyAutoSubDatabase::addEntry (const Entry& entry)
+{
+    m_autosub_dictionary.add(entry.shortcut, entry.substitution);
+    return SKERR_SUCCESS;
+}
+
+/**
+* save
+*
+* @return SmartKeyErrorCode
+*   SKERR_SUCCESS if done
+*/
+inline SmartKeyErrorCode SmkyAutoSubDatabase::save (void)
+{
+    return ( m_autosub_dictionary.save(Settings::getInstance()->getDBFilePath(Settings::DICT_AUTOSUB)) ? SKERR_SUCCESS : SKERR_FAILURE );
+}
+
 
 }
 

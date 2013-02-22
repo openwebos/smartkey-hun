@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -16,253 +17,44 @@
 *
 * LICENSE@@@ */
 
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <wctype.h>
-#include <algorithm>
 #include "SmkyAutoSubDatabase.h"
 #include "SmkyUserDatabase.h"
 #include "Settings.h"
 #include "SmartKeyService.h"
-#include "StringUtils.h"
+#include <string>
 
-#if 0 // Debug settings
-#define DEBUG_STUB g_debug
-#else
-#define DEBUG_STUB(fmt, args...) (void)0
-#endif
-
-namespace SmartKey
-{
-
-// 10KB = approx 100 entries.
-const size_t k_DatabaseSize = 30 * 1024;
+using namespace SmartKey;
 
 /**
-* SmkyAutoSubDatabase()
-*
-* @param SMKY_LINFO& lingInfo
-*   <perameter description>
-*
-* @param const LocaleSettings& localeSettings
-*   <perameter description>
-*
-* @param const Settings& settings
-*   <perameter description>
-*/
-SmkyAutoSubDatabase::SmkyAutoSubDatabase(SMKY_LINFO& lingInfo, const LocaleSettings& localeSettings, const Settings& settings) :
-	SmkyDatabase(lingInfo)
-	, m_settings(settings)
-	, m_pDatabaseData(NULL)
-	, m_createdDatabase(false)
-	, m_locale(localeSettings)
+ * SmkyAutoSubDatabase
+ */
+SmkyAutoSubDatabase::SmkyAutoSubDatabase (void)
 {
+    m_autosub_dictionary.load( _getDbPath() );
+    m_autosub_hc_dictionary.load( _getHcDbPath() );
 }
 
 /**
-* ~SmkyAutoSubDatabase()
-*
-*/
-SmkyAutoSubDatabase::~SmkyAutoSubDatabase()
+ * ~SmkyAutoSubDatabase
+ */
+SmkyAutoSubDatabase::~SmkyAutoSubDatabase (void)
 {
-	SMKY_STATUS wStatus = saveDb();
-	if (wStatus) {
-		g_warning("ERROR %d saving user db.", wStatus);
-	}
-
-	if (NULL != m_pDatabaseData) free(m_pDatabaseData);
+    save();
 }
 
 /**
-* didCreateDatabase()
-* <here is function description>
-*
-* @return bool
-*       - TRUE  : if database was created
-*       - FALSE : if not
-*/
-bool SmkyAutoSubDatabase::didCreateDatabase() const
-{
-	return m_createdDatabase;
-}
-
-/**
-* getDbPath()
-* <here is function description>
-*
-* @return std::string
-*    <return value description>
-*/
-std::string SmkyAutoSubDatabase::getDbPath() const
-{
-	return m_settings.readWriteDataDir + "/smky/auto_sub_db_" + m_locale.getLanguageCountryLocale() + ".bin";
-}
-
-/**
-* isWordAllUppercase()
-* <here is function description>
-*
-* @param *word
-*   <perameter description>
-*
-* @param wordLen
-*   <perameter description>
-*
-* @return bool
-*       - TRUE  : all letters are in upper case
-*       - FALSE : if not
-*/
-bool SmkyAutoSubDatabase::isWordAllUppercase (const uint16_t* word, uint16_t wordLen)
-{
-	if (word == NULL)
-		return false;
-
-	for (uint16_t i = 0; i < wordLen; i++) {
-		if (!iswupper(word[i]))
-			return false;
-	}
-
-	return true;
-}
-
-/**
-* matchGuessCaseToInputWord()
-* Try to match the case of the guess to the input word. This way "cant" becomes "can't" and
-* "Cant" becomes "Can't".
-*
-* @param inputWord
-*   <perameter description>
-*
-* @param inputLen
-*   <perameter description>
-*
-* @param guessLen
-*   <perameter description>
-*/
-void SmkyAutoSubDatabase::matchGuessCaseToInputWord (const uint16_t* inputWord, uint16_t inputLen, uint16_t* guess, uint16_t guessLen)
-{
-	if (inputWord != NULL && guess != NULL && inputWord > 0 && iswupper(inputWord[0])) {
-
-		// Default algorithm is to uppercase the first character of the guess if the first character 
-		// of the input is uppercase.
-		uint16_t numChars = 1;
-
-		if (inputLen > 1 && isWordAllUppercase(inputWord, inputLen)) {
-			// But if the input word is all uppercase then we will uppercase the entire guess.
-			numChars = guessLen;
-		}
-
-		for (uint16_t i = 0; i < numChars; i++) {
-			guess[i] = towupper(guess[i]);
-		}
-	}
-}
-
-/**
-* findEntry()
-* <here is function description>
-*
-* @param shortcut
-*   <perameter description>
-*
-* @param shortcutLen
-*   <perameter description>
-*
-* @param substitution
-*   <perameter description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::findEntry (const gunichar2* shortcut, uint16_t shortcutLen, std::string& substitution)
-{
-
-    // TODO:
-    //  a)  Look short-cut up in m_lingInfo
-    //  b)  If found, make sure case of substitution matches input using matchGuessCaseToInputWord()
-    //  c)  If not found, check the hardcode entries list m_hardCodedEntries
-    //  d)  If found in hard coded list make sure case of substitution matches input
-    //  e)  Return true status
-
-    return SMKY_STATUS_NONE;
-}
-
-/**
-* findEntry()
-* <here is function description>
-*
-* @param shortcut
-*   <perameter description>
-*
-* @return std::string
-*   <return value description>
-*/
-std::string SmkyAutoSubDatabase::findEntry (const std::string& shortcut)
-{
-
-    // TODO:
-    //  a)  Wrapper around the other findEntry() method
-    //  b)  If found, return the substitution
-    //  c)  If not found, return empty string
-
-	return "";
-}
-
-/**
-* addEntry()
-* <here is function description>
-*
-* @param entry
-*   <perameter description>
-*
-* @return SmartKeyErrorCode
-*   <return value description>
-*/
-SmartKeyErrorCode SmkyAutoSubDatabase::addEntry (const Entry& entry)
-{
-
-    // TODO:
-    //  a)  Wrapper for other addEntry method
-    //  b)  Return true status
-
-    return SKERR_SUCCESS;
-}
-
-/**
-* addEntry()
-* <here is function description>
-*
-* @param shortcut
-*   <perameter description>
-*
-* @param substitution
-*   <perameter description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::addEntry(const std::string& shortcut, const std::string& substitution)
-{
-    // TODO:
-    //  a)  Add short-cut and substitution to m_lingInfo
-    //  b)  Return true status
-
-    return SMKY_STATUS_NONE;
-}
-
-/**
-* compare_entries()
 * Loads <b>all</b> user entries into the provided list - unsorted.
-* 
-* @param which 
+*
+* @param which
 *     defines type of entry:  UserEntries or StockEntries
+*
+* @param entries
+*     write to this entries list
+*
+* @return SMKY_STATUS
+*   = SKERR_SUCCESS always
 */
-SMKY_STATUS SmkyAutoSubDatabase::loadEntries(WhichEntries which, std::list<Entry>& entries) const
+SmartKeyErrorCode SmkyAutoSubDatabase::loadEntries (WhichEntries which, std::list<Entry>& entries)
 {
     entries.clear();
 
@@ -272,351 +64,151 @@ SMKY_STATUS SmkyAutoSubDatabase::loadEntries(WhichEntries which, std::list<Entry
     //  c)  Write to entries list
     //  d)  Return true status
 
-    return SMKY_STATUS_NONE;
+    switch (which)
+    {
+    case (UserEntries) :
+    {
+        m_autosub_dictionary.exportToList(entries);
+    }
+    break;
+
+    case (StockEntries) :
+    {
+        m_autosub_hc_dictionary.exportToList(entries);
+    }
+    break;
+
+    case (AllEntries) :
+    {
+        m_autosub_hc_dictionary.exportToList(entries);
+        m_autosub_dictionary.exportToList(entries);
+    }
+    break;
+    }
+
+    return SKERR_SUCCESS;
 }
 
 /**
-* compare_entries()
-* <here is function description>
+* compare two words from the Entry instances
 *
 * @param first
-*   <perameter description>
+*   first Entry instance
 *
 * @param second
-*   <perameter description>
+*   second Entry instance
 *
 * @return bool
     TRUE :
     FALSE:
 */
-static bool compare_entries (const SmkyAutoSubDatabase::Entry& first, const SmkyAutoSubDatabase::Entry& second)
+static bool compare_entries (const Entry& first, const Entry& second)
 {
-	return StringUtils::compareStrings(first.shortcut, second.shortcut);
+    return StringUtils::compareStrings(first.shortcut, second.shortcut);
 }
 
 /**
- * Get all user entries
+ * Get all user entries starting from the offset
  */
-SmartKeyErrorCode SmkyAutoSubDatabase::getEntries(int offset, int limit, WhichEntries which, std::list<Entry>& entries)
+SmartKeyErrorCode SmkyAutoSubDatabase::getEntries (int offset, int limit, WhichEntries which, std::list<Entry>& entries)
 {
-	if (offset < 0 || limit < 0)
-		return SKERR_BAD_PARAM;
+    if (offset < 0 || limit < 0)
+        return SKERR_BAD_PARAM;
 
-	entries.clear();
+    entries.clear();
 
-	std::list<Entry> allEntries;
-	SMKY_STATUS wStatus = loadEntries(which, allEntries);
-	if (wStatus == SMKY_STATUS_NONE) {
-		allEntries.sort(compare_entries);
-		std::list<Entry>::const_iterator i = allEntries.begin();
-		// Skip up to the offset
-		while (i != allEntries.end() && offset-- > 0) {
-			++i;
-		}
+    std::list<Entry> allEntries;
+    SmartKeyErrorCode wStatus = loadEntries(which, allEntries);
+    if (wStatus == SKERR_SUCCESS)
+    {
+        allEntries.sort(compare_entries);
+        std::list<Entry>::const_iterator i = allEntries.begin();
+        // Skip up to the offset
+        while (i != allEntries.end() && offset-- > 0)
+        {
+            ++i;
+        }
 
-		// Now read the entries
-		while (i != allEntries.end() && limit-- > 0) {
-			entries.push_back(*i++);
-		}
-	}
+        // Now read the entries
+        while (i != allEntries.end() && limit-- > 0)
+        {
+            entries.push_back(*i++);
+        }
+    }
 
-	return SmkyUserDatabase::smkyErrorToSmartKeyError(wStatus);
+    return (wStatus);
 }
 
 /**
-* getNumEntries()
 * Return the number of user entries
 *
-* 
-* @param which 
-*     defines type of entry:  UserEntries or StockEntries
+*
+* @param which
+*   input value: defines type of entry:  UserEntries or StockEntries
 *
 * @param entries
-*   <perameter description>
+*   output value: number of words
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   = SKERR_SUCCESS always
 */
 SmartKeyErrorCode SmkyAutoSubDatabase::getNumEntries (WhichEntries which, int& entries)
 {
-	entries = 0;
-
     // TODO:
     //  a)  Get the number of entries of the specified type from m_lingInfo
     //  b)  Return true status
 
-    return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_NONE);
+    switch (which)
+    {
+    case (UserEntries) :
+    {
+        entries = m_autosub_dictionary.size();
+    }
+    break;
+
+    case (StockEntries) :
+    {
+        entries = m_autosub_hc_dictionary.size();
+    }
+    break;
+
+    case (AllEntries) :
+    {
+        entries = m_autosub_dictionary.size() + m_autosub_hc_dictionary.size();
+    }
+    break;
+    }
+
+    return SKERR_SUCCESS;
 }
 
 /**
-* duplicateShortEntries()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::duplicateShortEntries()
-{
-
-    // TODO:
-    //  a)  This may not been needed with HunSpell, so perhaps no action
-
-    return SMKY_STATUS_NONE;
-}
-
-/**
-* loadDefaultData()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::loadDefaultData()
-{
-	SMKY_STATUS wStatus = SMKY_STATUS_NONE;
-
-	int count = 0;
-	std::string fname =  m_locale.findLocalResource(m_settings.readOnlyDataDir + "/smky/DefaultData/autoreplace/", "/text-edit-autoreplace");
-	FILE* f = fopen(fname.c_str(),"rb");
-	if (f) {
-		char linebuffer[128];
-		while (fgets(linebuffer, sizeof(linebuffer), f)) {
-			char* shortcut = strtok(linebuffer,"|\x0d\x0a" );
-			char* replacement = strtok(0,"\x0d\x0a" );
-			if (shortcut != NULL && replacement != NULL && strlen(shortcut) > 0 && strlen(replacement) > 0) {
-				SMKY_STATUS s = addEntry(shortcut, replacement);
-				if (wStatus == SMKY_STATUS_NONE)
-					wStatus = s, ++count;
-			}
-		}
-	}
-	else {
-		wStatus = SMKY_STATUS_READ_DB_FAIL;
-	}
-
-	if (wStatus == SMKY_STATUS_NONE) {
-		wStatus = duplicateShortEntries();
-	}
-	
-	g_debug("Loaded %d auto-replace entries for locale '%s' from '%s'. Result: %u", count, m_locale.getFullLocale().c_str(), fname.c_str(), wStatus);
-
-	return wStatus;
-}
-
-/**
-* loadHardCodedEntries()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::loadHardCodedEntries()
-{
-	std::string fname =  m_locale.findLocalResource(m_settings.readOnlyDataDir + "/smky/DefaultData/autoreplace-hc/", "/text-edit-autoreplace");
-
-	SMKY_STATUS wStatus;
-	FILE* f = fopen(fname.c_str(),"rb");
-	if (f) {
-		wStatus = SMKY_STATUS_NONE;
-		char linebuffer[128];
-		while (fgets(linebuffer, sizeof(linebuffer), f)) {
-			const char* shortcut = strtok(linebuffer,"|\x0d\x0a" );
-			const char* replacement = strtok(0,"\x0d\x0a" );
-			if (shortcut != NULL && replacement != NULL && strlen(shortcut) > 0 && strlen(replacement) > 0) {
-				m_hardCodedEntries[shortcut] = replacement;
-			}
-		}
-
-		g_debug("Loaded %u hard-code AR entries from '%s'", m_hardCodedEntries.size(), fname.c_str());
-	}
-	else {
-		wStatus = SMKY_STATUS_READ_DB_FAIL;
-	}
-
-	return wStatus;
-}
-
-/**
-* init()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::init()
-{
-    g_assert(m_pDatabaseData == NULL);
-	m_pDatabaseData = static_cast<uint8_t*>(calloc(k_DatabaseSize, sizeof(uint8_t)));
-	if (NULL == m_pDatabaseData)
-		return SMKY_STATUS_NO_MEMORY;
-
-	m_createdDatabase = true;
-	std::string path = getDbPath();
-	if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS)) {
-		size_t size = SmartKeyService::fileSize(path);
-		if (size != InvalidFileSize) {
-			if (size <= k_DatabaseSize) {
-				int fd = open(path.c_str(), O_RDONLY);
-				if (-1 != fd) {
-					ssize_t bytesRead = read(fd, m_pDatabaseData, size);
-					close(fd);
-					if (static_cast<size_t>(bytesRead) != size) {
-						memset(m_pDatabaseData, 0, k_DatabaseSize);
-					}
-					else {
-						m_createdDatabase = false;
-					}
-				}
-			}
-		}
-	}
-
-    //
-    // TODO: Initialize m_lingInfo from m_pDatabaseData
-    //
-
-	if (m_createdDatabase) {
-		g_message("First time creating auto-sub database for locale %s. Loading default data...", m_locale.getFullLocale().c_str());
-		loadDefaultData();
-	}
-	else {
-		g_debug("Just loaded auto-sub database for locale %s.", m_locale.getFullLocale().c_str());
-	}
-
-	if (wStatus == SMKY_STATUS_NONE)
-		cacheLdbEntries();
-
-	if (wStatus == SMKY_STATUS_NONE)
-		loadHardCodedEntries();
-
-   return wStatus;
-}
-
-/**
-* save()
-* <here is function description>
+* init
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   always SKERR_SUCCESS
 */
-SmartKeyErrorCode SmkyAutoSubDatabase::save()
+SmartKeyErrorCode SmkyAutoSubDatabase::init (void)
 {
-	return SmkyUserDatabase::smkyErrorToSmartKeyError(saveDb());
+    return SKERR_SUCCESS;
 }
 
 /**
-* saveDb()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::saveDb()
-{
-	if (m_pDatabaseData == NULL)
-		return SMKY_STATUS_INVALID_MEMORY;
-
-	double start = SmartKeyService::getTime();
-
-	std::string path = getDbPath();
-	std::string tmpPath = path + ".tmp";
-
-	std::string parentDir = SmartKeyService::dirName(tmpPath);
-	if (!parentDir.empty()) {
-		::g_mkdir_with_parents(parentDir.c_str(), S_IRWXU );
-	}
-	if (g_file_test(tmpPath.c_str(), G_FILE_TEST_EXISTS))
-		g_unlink(tmpPath.c_str());
-
-	SMKY_STATUS wStatus = SMKY_STATUS_WRITE_DB_FAIL;
-	int fd = open(tmpPath.c_str(), O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP);
-	if (-1 != fd) {
-		ssize_t written = write(fd, m_pDatabaseData, k_DatabaseSize);
-		fsync(fd);
-		close(fd);
-		if (size_t(written) == k_DatabaseSize) {
-			if (0 == g_rename(tmpPath.c_str(), path.c_str())) {
-				wStatus = SMKY_STATUS_NONE;
-				double now = SmartKeyService::getTime();
-				g_debug("Auto-sub database saved in %g msec.  %u", (now-start) * 1000.0, wStatus);
-			}
-			else {
-				g_warning("Error writing auto-sub db");
-				g_unlink(tmpPath.c_str());
-			}
-		}
-	}
-
-	return wStatus;
-}
-
-/**
-* forgetWord()
-* <here is function description>
+* Find the substitution (if there is one) for the given shortcut.
 *
 * @param shortcut
-*   <perameter description>
+*   shortcut
 *
-* @return SmartKeyErrorCode
-*   <return value description>
+* @return std::string
+*   The substitution mapped by the shortcut or an empty string if no mapping.
 */
-SmartKeyErrorCode SmkyAutoSubDatabase::forgetWord(const std::string& shortcut)
+std::string SmkyAutoSubDatabase::getLdbSubstitution (std::string& shortcut)
 {
-	SMKY_STATUS wStatus;
-	
-    // TODO:
-    //  a)  Delete shortcut from m_lingInfo
-    //  b)  Return true status
-	
-	wStatus = SMKY_STATUS_NO_MEMORY;
-
-	return SmkyUserDatabase::smkyErrorToSmartKeyError(wStatus);
+    std::string lcshortut = StringUtils::utf8tolower(shortcut);
+    return (m_autosub_dictionary.find(lcshortut));
 }
 
 /**
-* setLocaleSettings()
-* <here is function description>
-*
-* @param localeSettings
-*   <perameter description>
-*
-* @return SmartKeyErrorCode
-*   <return value description>
-*/
-SmartKeyErrorCode SmkyAutoSubDatabase::setLocaleSettings(const LocaleSettings& localeSettings)
-{
-	// We don't do anything because when the locale changes the engine destroys and
-	// recreates me with a new locale.
-	return SKERR_SUCCESS;
-}
-
-/**
-* cacheLdbEntries()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkyAutoSubDatabase::cacheLdbEntries()
-{
-	m_ldbEntries.clear();
-
-	std::list<Entry> entries;
-	SMKY_STATUS wStatus = loadEntries(StockEntries, entries);
-	if (wStatus == SMKY_STATUS_NONE) {
-		std::list<Entry>::const_iterator entry;
-		for (entry = entries.begin(); entry != entries.end(); ++entry) {
-			std::string lcshortut = StringUtils::utf8tolower(entry->shortcut);
-			m_ldbEntries[lcshortut] = entry->substitution;
-		}
-	}
-
-	g_debug("Loaded %u LDB entries", m_ldbEntries.size());
-	return wStatus;
-}
-
-/**
-* getLdbSubstitution()
 * Find the substitution (if there is one) for the given shortcut.
 *
 * @param shortcut
@@ -625,37 +217,23 @@ SMKY_STATUS SmkyAutoSubDatabase::cacheLdbEntries()
 * @return std::string
 *   The substitution mapped by the shortcut or an empty string if no mapping.
 */
-std::string SmkyAutoSubDatabase::getLdbSubstitution(const std::string& shortcut) const
+std::string SmkyAutoSubDatabase::getHardCodedSubstitution (std::string& shortcut)
 {
-	std::string lcshortut = StringUtils::utf8tolower(shortcut);
-
-	std::map<std::string,std::string>::const_iterator entry = m_ldbEntries.find(lcshortut);
-	if (entry == m_ldbEntries.end())
-		return "";
-	else
-		return entry->second;
+    std::string lcshortut = StringUtils::utf8tolower(shortcut);
+    return(m_autosub_hc_dictionary.find(shortcut));
 }
 
 /**
-* getHardCodedSubstitution()
-* Find the substitution (if there is one) for the given shortcut.
-*
-* @param shortcut
-*   <perameter description>
-*
-* @return std::string
-*   The substitution mapped by the shortcut or an empty string if no mapping.
+* notification about locale change
 */
-std::string SmkyAutoSubDatabase::getHardCodedSubstitution(const std::string& shortcut) const
+void SmkyAutoSubDatabase::changedLocaleSettings (void)
 {
-	std::string lcshortut = StringUtils::utf8tolower(shortcut);
+    g_debug("AutoSubDB: got notification about locale settings change");
 
-	std::map<std::string,std::string>::const_iterator entry = m_hardCodedEntries.find(lcshortut);
-	if (entry == m_hardCodedEntries.end())
-		return "";
-	else
-		return entry->second;
+    save();
+    m_autosub_dictionary.load( _getDbPath() );
+    m_autosub_hc_dictionary.load( _getHcDbPath() );
 }
 
-}
+
 
