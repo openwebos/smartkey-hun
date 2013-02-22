@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2011-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2011-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -21,16 +22,14 @@
 
 
 /**
-* PerfTimer()
-* <here is function description>
+* PerfTimer
 */
 PerfTimer::PerfTimer()
 {
 }
 
 /**
-* start()
-* <here is function description>
+* ~PerfTimer
 */
 void PerfTimer::start()
 {
@@ -38,8 +37,7 @@ void PerfTimer::start()
 }
 
 /**
-* stop()
-* <here is function description>
+* stop
 */
 void PerfTimer::stop()
 {
@@ -47,8 +45,7 @@ void PerfTimer::stop()
 }
 
 /**
-* print()
-* <here is function description>
+* print
 */
 void PerfTimer::print(const char* msg)
 {
@@ -59,18 +56,17 @@ void PerfTimer::print(const char* msg)
 }
 
 /**
-* gettime()
-* <here is function description>
+* gettime
 *
 * @return double
-*   <return value description>
+*   time
 */
 double PerfTimer::gettime()
 {
     struct timespec curTime;
     clock_gettime(CLOCK_REALTIME, &curTime);
 
-    return static_cast<double>(curTime.tv_sec) + 
-        static_cast<double>(curTime.tv_nsec) / 1000000000.0f;
+    return static_cast<double>(curTime.tv_sec) +
+           static_cast<double>(curTime.tv_nsec) / 1000000000.0f;
 }
 

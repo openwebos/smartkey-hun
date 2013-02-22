@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,202 +29,314 @@
 #include <algorithm>
 #include <errno.h>
 #include "StringUtils.h"
-#include "SmkySpellCheckEngine.h"
-#include "SmkyDatabase.h"
-#include "SmkyUserDatabase.h"
+#include "Database.h"
 #include "SmkyAutoSubDatabase.h"
 #include "SmkyManufacturerDatabase.h"
+#include "SmkyHunspellDatabase.h"
 #include "Settings.h"
 #include "SmartKeyService.h"
-#include "SpellCheckClient.h"
-
-// TODO:  This is where we define different keyboard layouts, if we can use this information.
-//      Probably not relevant for HunSpell
-
-const uint16_t INVALID_KDB = -1;
-
-// We only ever use the first page of our keyboard db's (at least for now).
-const uint16_t k_wLangPageNo = 0;
-
-static const Settings* g_pSettings;
+#include "SmkySpellCheckEngine.h"
+#include <pbnjson.hpp>
 
 // debug macros for calls. Sets the wStatus variable that must be defined already. Declare a local status variable of type SMKY_STATUS.
 #define SMKY_VERIFY(x) (G_LIKELY((wStatus = x) == SMKY_STATUS_NONE) || (g_warning("'%s' returned error #%d, in %s of %s line %d", #x, wStatus, __FUNCTION__, __FILE__, __LINE__), false))
 #define SMKY_VERIFY2(x, OKerror) (G_LIKELY((wStatus = x) == SMKY_STATUS_NONE) || (wStatus == OKerror) || (g_warning("'%s' returned error #%d, in %s of %s line %d", #x, wStatus, __FUNCTION__, __FILE__, __LINE__), false))
 
+using namespace SmartKey;
 
-namespace SmartKey {
-
-/* public */
 /**
-* SmkySpellCheckEngine()
-* <here is function description>
-*
-* @param settings
-*   <perameter description>
+* SmkySpellCheckEngine
 */
-SmkySpellCheckEngine::SmkySpellCheckEngine(const Settings& settings) :
-	  m_userDb(NULL)
-	, m_manDb(NULL)
-	, m_autoSubDb(NULL)
-	, m_settings(settings)
-	, m_primaryLanguage(0)
-	, m_pendingKdb(INVALID_KDB)
-	, m_smkysetup(smkysetup_none)
-	, m_keyboardIsVirtual(false)
+SmkySpellCheckEngine::SmkySpellCheckEngine (void)
 {
+    mp_hunspDb = new SmkyHunspellDatabase();
+    mp_autoSubDb = new SmkyAutoSubDatabase();
+    mp_userDb = new SmkyUserDatabase();
+    mp_manDb = new SmkyManufacturerDatabase();
 
-    // TODO:  Do we also need to initialize m_lingInfo, m_lingCommonInfo, m_sWordSymbInfo, m_pSelList, m_sKdbInfo
+    m_initialized = mp_hunspDb && mp_autoSubDb && mp_userDb && mp_manDb;
 
-	g_pSettings = &settings;
-	
-	m_wSmkyInitStatus = init();
-	if (m_wSmkyInitStatus == SMKY_STATUS_NONE)
-		g_message("engine successfully initialized.");
-	else
-		g_warning("ERROR %u initializing engine.", m_wSmkyInitStatus);
+    if(m_initialized)
+        g_message("SpellCheckEngine successfully initialized.");
+    else
+    {
+        g_warning("ERROR initializing SpellCheckEngine.");
+        _clean();
+    }
+
+    //init locale words
+    m_locale_dictionary.load(Settings::getInstance()->getDBFilePath(Settings::DICT_LOCALE),
+                             Settings::getInstance()->getDBFilePath(Settings::DICT_LOCALE, Settings::DICT_LOCALE_DEPEND));
+
+    //load whitelist
+    m_white_dictionary.load(Settings::getInstance()->getDBFilePath(Settings::DICT_WHITE),
+                            Settings::getInstance()->getDBFilePath(Settings::DICT_WHITE, Settings::DICT_LOCALE_DEPEND));
+
+    //init list of supported languages (need to move it to configuration file!)
+    m_languages.add("en");
+    m_languages.add("es");
+    m_languages.add("fr");
+    m_languages.add("de");
+    m_languages.add("it");
 }
 
-/* public */
 /**
-* ~SmkySpellCheckEngine()
-* <here is function description>
+* SmkySpellCheckEngine
 */
 SmkySpellCheckEngine::~SmkySpellCheckEngine()
 {
-	delete m_autoSubDb;
-	delete m_userDb;
-	delete m_manDb;
+    _clean();
 }
 
 /**
-* init()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   <return value description>
+* clean
 */
-SMKY_STATUS SmkySpellCheckEngine::init()
+void SmkySpellCheckEngine::_clean (void)
 {
+    m_initialized = false;
 
-    // TODO:  
-    // a)  Initialize m_lingInfo, m_lingCommonInfo, &m_sWordSymbInfo
-    // b)  Initialize m_userDb  (UserDatabase)
-    // c)  Initialize m_manDb  (ManufacturerDatabase)
+    if (mp_hunspDb)
+    {
+        delete mp_hunspDb;
+        mp_hunspDb = NULL;
+    }
 
-	return SMKY_STATUS_NONE;
+    if (mp_autoSubDb)
+    {
+        delete mp_autoSubDb;
+        mp_autoSubDb = NULL;
+    }
+
+    if (mp_userDb)
+    {
+        delete mp_userDb;
+        mp_userDb = NULL;
+    }
+
+    if (mp_manDb)
+    {
+        delete mp_manDb;
+        mp_manDb = NULL;
+    }
 }
 
-
-/* public */
 /**
-* getSupportedLanguages()
-* <here is function description>
+* get supported languages
 *
 * @return char*
-*   <return value description>
+*   return string like '{"languages":["en_un","es_un","fr_un","de_un","it_un"]}'
 */
-const char *  SmkySpellCheckEngine::getSupportedLanguages() const
+const char*  SmkySpellCheckEngine::getSupportedLanguages()
 {
-    return "{\"languages\":[\"en_un\",\"es_un\",\"fr_un\",\"de_un\",\"it_un\"]}";
+    string retval = "{\"languages\":[";
+
+    list<std::string> entries;
+    m_languages.exportToList(entries);
+
+    for ( list<std::string>::iterator it = entries.begin(); it != entries.end(); ++it )
+    {
+        if(it != entries.begin())
+            retval += ",";
+
+        retval += "\"" + *it + "_un\"";
+    }
+
+    retval += "]}";
+
+    return (retval.c_str()); //"{\"languages\":[\"en_un\",\"es_un\",\"fr_un\",\"de_un\",\"it_un\"]}";
 }
 
-
-/* private */
 /**
-* wordIsAllDigits()
-* <here is function description>
-*
-* @param word
-*   <perameter description>
+* is current language supported ?
 *
 * @return bool
-*   <return value description>
+*   true if current language is supported
 */
-bool SmkySpellCheckEngine::wordIsAllDigits(const std::string& word)
+bool SmkySpellCheckEngine::_isCurrentLanguageSupported (void)
 {
-	std::string::const_iterator i;
-	for (i = word.begin(); i != word.end(); ++i) {
-		if (!(isdigit(*i) || *i == '.'))
-			return false;
-	}
-
-	return true;
+    return(m_languages.find(Settings::getInstance()->localeSettings.m_inputLanguage));
 }
 
-/* public */
 /**
-* checkSpelling()
-* <here is function description>
+* test word for all digits inside
 *
 * @param word
-*   <perameter description>
+*   word to test
+*
+* @return bool
+*   true if it is
+*/
+bool SmkySpellCheckEngine::_wordIsAllDigits (const std::string& word)
+{
+    std::string::const_iterator i;
+    for (i = word.begin(); i != word.end(); ++i)
+    {
+        if (!(isdigit(*i) || *i == '.'))
+            return false;
+    }
+
+    return true;
+}
+
+/**
+* check spelling
+*
+* @param word
+*   word to check
 *
 * @param result
-*   <perameter description>
+*   output: result
 *
 * @param maxGuesses
-*   <perameter description>
+*   number of words in result
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   SKERR_SUCCESS if done
 */
-SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling(const std::string& word, SpellCheckWordInfo& result, int maxGuesses)
+SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, SpellCheckWordInfo& result, int maxGuesses)
 {
-	result.clear();
+    result.clear();
 
-    // TODO:
+    if ( !m_initialized )
+        return SKERR_FAILURE;
+
+    // DONE:
     //  a) If current languuage not supported in a loaded dictionary, set result.inDictionary=true; and return success
+    if ( !_isCurrentLanguageSupported() )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  b) If whitelist is non-empty. check it.  If found set result.inDictionary=true; and return success
-    //  c) Check word in auto sub dictionary. 
-    //         If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+    if ( m_white_dictionary.find(word) )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
+    //  c) Check word in auto sub dictionary.
+    string auto_subdb_word = mp_autoSubDb->findEntry(word);
+    WordGuess word_guess;
+
+    if ( auto_subdb_word.length() > 0 )
+    {
+        // If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+        word_guess.guess = auto_subdb_word;
+        word_guess.spellCorrection = false;
+        word_guess.autoReplace = true;
+        word_guess.autoAccept = true;
+        result.guesses.push_back(word_guess);
+    }
+
     //  d) If word is all digits, set result.inDictionary=true; and return success
-    //  e) If no result found look word up in dictionaries
+    if (_wordIsAllDigits(word))
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
+    //  e) If no result found look word up in dictionaries: manufacturer and user (person and context)
+    if ( mp_manDb->findEntry(word) || mp_userDb->findWord(word) )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
+    if ( mp_hunspDb->findGuesses(word, result, maxGuesses) == SKERR_SUCCESS)
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
     //      otherwise select best matching guess for autoaccept flag
-    //  h) Return valid error code
 
+    //  [Igor: this is done already in section c) ]
+
+    //  h) Return valid error code
     return SKERR_SUCCESS;
 }
 
-/* public */
 /**
-* autoCorrect()
-* <here is function description>
+* auto correct
 *
 * @param word
-*   <perameter description>
+*   word to correct
 *
 * @param context
-*   <perameter description>
+*   context (parameter is not used)
 *
 * @param result
-*   <perameter description>
+*   result
 *
 * @param maxGuesses
-*   <perameter description>
+*   number of words in result
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   SKERR_SUCCESS if done
 */
-SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, const std::string& context, SpellCheckWordInfo& result, int maxGuesses)
+SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect (const std::string& word, const std::string& context, SpellCheckWordInfo& result, int maxGuesses)
 {
-	result.clear();
+    result.clear();
 
-    // TODO:
     //  a) If current languuage not supported in a loaded dictionary, set result.inDictionary=true; and return success
+    if ( !_isCurrentLanguageSupported() )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  b) If whitelist is non-empty. check it.  If found set result.inDictionary=true; and return success
-    //  c) Check word in auto sub dictionary. 
+    if ( m_white_dictionary.find(word) )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
+    //  c) Check word in auto sub dictionary.
     //         If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+    string auto_subdb_word = mp_autoSubDb->findEntry(word);
+    WordGuess word_guess;
+
+    if ( auto_subdb_word.length() > 0 )
+    {
+        word_guess.guess = auto_subdb_word;
+        word_guess.spellCorrection = false;
+        word_guess.autoReplace = true;
+        word_guess.autoAccept = true;
+        result.guesses.push_back(word_guess);
+    }
+
     //  d) If word is all digits, set result.inDictionary=true; and return success
+    if (_wordIsAllDigits(word))
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  e) If no result found look word up in dictionaries
+    if ( mp_manDb->findEntry(word) || mp_userDb->findWord(word) )
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
+    if ( mp_hunspDb->findGuesses(word, result, maxGuesses) == SKERR_SUCCESS)
+    {
+        result.inDictionary = true;
+        return SKERR_SUCCESS;
+    }
+
     //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
     //      otherwise select best matching guess for autoaccept flag
-    //  h) Return valid error code
 
-	return SKERR_SUCCESS;
+    //  [Igor: this is done already in section c) ]
+
+    //  h) Return valid error code
+    return SKERR_SUCCESS;
 }
 
 #ifdef TARGET_DESKTOP
@@ -239,444 +352,140 @@ SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect(const std::string& word, con
 #endif
 
 /**
-* typeWord()
-* <here is function description>
+* nothing to do yet
 *
-* @param *word
-*   <perameter description>
+* @param result
+*   result
 *
-* @param wordLength
-*   <perameter description>
+* @param maxGuesses
+*   number of words in result
 *
-* @return SMKY_STATUS
-*   <return value description>
+* @return SmartKeyErrorCode
+*   SKERR_SUCCESS if done
 */
-SMKY_STATUS SmkySpellCheckEngine::typeWord (const uint16_t *word, uint16_t wordLength)
+SmartKeyErrorCode SmkySpellCheckEngine::_getSelectionResults (SpellCheckWordInfo& result, int maxGuesses)
 {
-    SMKY_STATUS wStatus = SMKY_STATUS_NONE;
-    
-    // TODO:  This may not be necessary to support with HunSpell
+    result.clear();
+    SmartKeyErrorCode wStatus = SKERR_SUCCESS;
     return wStatus;
 }
 
 /* public */
 /**
-* processTrace()
-* <here is function description>
+* process trace (this function is nothing to do yet)
 *
 * @param points
-*   <perameter description>
+*   <parameter description>
 *
 * @param shift
-*   <perameter description>
+*   <parameter description>
 *
 * @param firstChars
-*   <perameter description>
+*   <parameter description>
 *
 * @param lastChars
-*   <perameter description>
+*   <parameter description>
 *
 * @param result
-*   <perameter description>
+*   result
 *
 * @param maxGuesses
-*   <perameter description>
+*   number of words in result
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   SKERR_SUCCESS if done
 */
 SmartKeyErrorCode SmkySpellCheckEngine::processTrace(const std::vector<unsigned int>& points, EShiftState shift, const std::string& firstChars, const std::string& lastChars, SpellCheckWordInfo& result, int maxGuesses)
 {
-	result.clear();
-	return SKERR_SUCCESS;
+    result.clear();
+    return SKERR_SUCCESS;
 }
 
 /* public */
 /**
-* processTaps()
-* <here is function description>
+* process taps (this function is nothing to do yet)
 *
 * @param taps
-*   <perameter description>
+*   <parameter description>
 *
 * @param result
-*   <perameter description>
+*   result
 *
 * @param maxGuesses
-*   <perameter description>
+*   number of words in result
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   SKERR_SUCCESS if done
 */
 SmartKeyErrorCode SmkySpellCheckEngine::processTaps (const TapDataArray& taps, SpellCheckWordInfo& result, int maxGuesses)
 {
-	result.clear();
+    result.clear();
 
     // TODO:  What does this do?
 
-	return SKERR_SUCCESS;
+    return SKERR_SUCCESS;
 }
 
 /**
-* getSelectionResults()
-* <here is function description>
-*
-* @param result
-*   <perameter description>
-*
-* @param maxGuesses
-*   <perameter description>
-*
-* @return SMKY_STATUS
-*   <return value description>
-*/
-SMKY_STATUS SmkySpellCheckEngine::getSelectionResults (SpellCheckWordInfo& result, int maxGuesses)
-{
-	result.clear();
-	SMKY_STATUS wStatus = SMKY_STATUS_NONE;
-	return wStatus;
-}
-
-/* public */
-/**
-* getCompletion()
-* <here is function description>
+* get completion
 *
 * @param prefix
-*   <perameter description>
+*   look for word starting with this prefix
 *
 * @param result
-*   <perameter description>
+*   result word
 *
 * @return SmartKeyErrorCode
-*   <return value description>
+*   return code
 */
 SmartKeyErrorCode SmkySpellCheckEngine::getCompletion (const std::string& prefix, std::string& result)
 {
-	result.clear();
+    result.clear();
 
-	if (m_wSmkyInitStatus != SMKY_STATUS_NONE)
-		return SmkyUserDatabase::smkyErrorToSmartKeyError(m_wSmkyInitStatus);
+    if (!m_initialized)
+        return(SKERR_FAILURE);
 
-	if (prefix.empty())
-		return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_BAD_PARAM);
+    if (prefix.empty())
+        return(SKERR_BAD_PARAM);
 
     //  TODO:  This may not be necessary, but just in case:
     //  a) If all digits, don't try to complete
+    if (_wordIsAllDigits(prefix))
+    {
+        return SKERR_SUCCESS;
+    }
+
     //  b) If there's a match in the auto sub database, use that
-    //  c) Otherwise lookup the prefix (partially entered string) in the dictionaries to get an autocompletion match, if there is one
+    string auto_subdb_word = mp_autoSubDb->findEntry(prefix);
+
+    if ( auto_subdb_word.length() > 0 )
+    {
+        result = auto_subdb_word;
+    }
+    else
+    {
+        //  c) Otherwise lookup the prefix (partially entered string) in the dictionaries to get an autocompletion match, if there is one
+
+    }
     //  d) Return valid error code
-
-	return SmkyUserDatabase::smkyErrorToSmartKeyError(SMKY_STATUS_NONE);
-}
-
-/* public */
-/**
-* getUserDatabase()
-* Return the user (read/write) database.
-*
-* @return UserDatabase*
-*   <return value description>
-*/
-UserDatabase* SmkySpellCheckEngine::getUserDatabase()
-{
-	return m_userDb;
-}
-
-/* public */
-/**
-* getAutoSubDatabase()
-* Return the auto-substitution (read/write) database.
-*
-* @return AutoSubDatabase*
-*   <return value description>
-*/
-AutoSubDatabase* SmkySpellCheckEngine::getAutoSubDatabase()
-{
-	return m_autoSubDb;
-}
-
-/* public */
-/**
-* getManufacturerDatabase()
-* <here is function description>
-*
-* @return Database*
-*   <return value description>
-*/
-Database* SmkySpellCheckEngine::getManufacturerDatabase()
-{
-	return m_manDb;
+    return(SKERR_SUCCESS);
 }
 
 /**
-* getLanguageInfo()
-* <here is function description>
-*
-* @param wLangId
-*   <perameter description>
-*
-* @return LanguageInfo*
-*   <return value description>
+* this notification tell about locale settings change.
+* take a look into Settings::localeSettings - a new values was set there
 */
-SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo (uint16_t wLangId)
+void SmkySpellCheckEngine::changedLocaleSettings (void)
 {
-	std::list<LanguageInfo>::iterator i;
-	for (i = m_langInfo.begin(); i != m_langInfo.end(); ++i) {
-		if (i->m_langId == wLangId) {
-			return &*i;
-		}
-	}
+    if (m_initialized)
+    {
+        //load locale words
+        m_locale_dictionary.load( _getLocaleIndependDbPath(), _getLocaleDependDbPath() );
 
-	return NULL;
+        //load whitelist
+        m_white_dictionary.load( _getWhitelistIndependDbPath(), _getWhitelistDependDbPath() );
+
+        mp_hunspDb->changedLocaleSettings();
+    }
 }
-
-/**
-* getLanguageInfo()
-* <here is function description>
-*
-* @param languageCode
-*   <perameter description>
-*
-* @return LanguageInfo*
-*   <return value description>
-*/
-SmkySpellCheckEngine::LanguageInfo* SmkySpellCheckEngine::getLanguageInfo(const std::string& languageCode)
-{
-	if (languageCode.length() < 2) {
-		return NULL;
-	}
-
-	char lang[3];
-	lang[0] = tolower(languageCode[0]);
-	lang[1] = tolower(languageCode[1]);
-	lang[2] = '\0';
-
-	// this currently is only called when the locale changes (which is rare) and
-	// this way I can return a pointer in my container (which doesn't change) and
-	// not worry that std::map might move the pointer.
-	std::list<LanguageInfo>::iterator i;
-	for (i = m_langInfo.begin(); i != m_langInfo.end(); ++i) {
-		if (i->m_lang == lang) {
-			return &*i;
-		}
-	}
-
-	return NULL;
-}
-
-/**
-* initLanguage()
-* <here is function description>
-*
-* @return SMKY_STATUS
-*   The return code.
-*/
-SMKY_STATUS SmkySpellCheckEngine::LanguageInfo::initLanguage()
-{
-	if (m_initAttempted)
-		return m_langLoadStatus;
-	m_initAttempted = true;
-
-
-   // TODO:  validate language in dictionary, and return valid status
-
-	return (m_langLoadStatus = SMKY_STATUS_NONE);
-}
-
-/**
-* setLocaleSettings()
-* Set the current primary locale.
-*
-* @param localeSettings
-*   <perameter description>
-*
-* @param isVirtualKeyboard
-*   <perameter description>
-*
-* @return bool
-*   <return value description>
-*/
-bool SmkySpellCheckEngine::setLocaleSettings(const LocaleSettings& localeSettings, bool isVirtualKeyboard)
-{
-	g_debug("SmkySpellCheckEngine::setLocaleSettings: %s, %s", localeSettings.getFullLocale().c_str(), isVirtualKeyboard ? "virtual keyboard" : "physical keyboard");
-	SMKY_STATUS wStatus(SMKY_STATUS_NONE);
-
-	m_keyboardIsVirtual = isVirtualKeyboard;
-
-	LanguageInfo* primaryInfo = getLanguageInfo(localeSettings.m_inputLanguage);
-
-	uint16_t newPrimary = (primaryInfo ? primaryInfo->m_langId : 0);
-
-	if (newPrimary != m_primaryLanguage) {
-
-		if (primaryInfo)
-			primaryInfo->initLanguage();
-
-		m_primaryLanguage = newPrimary;
-	}
-        
-	loadWhitelist(localeSettings);
-	loadLocaleWords(localeSettings);
-	m_smkysetup = smkysetup_none;
-
-	return wStatus == SMKY_STATUS_NONE;
-}
-
-/**
-* loadWords()
-* <here is function description>
-*
-* @param fname
-*   <perameter description>
-*
-* @param words
-*   <perameter description>
-*
-* @return SmartKeyErrorCode
-*   <return value description>
-*/
-SmartKeyErrorCode SmkySpellCheckEngine::loadWords(const std::string& fname, std::set<std::string>& words)
-{
-	if (fname.empty())
-		return SKERR_BAD_PARAM;
-
-	SmartKeyErrorCode err = SKERR_FAILURE;
-	FILE* file = fopen(fname.c_str(), "r");
-	if (file) {
-		char line[128];
-		while (fgets(line, G_N_ELEMENTS(line), file) != NULL) {
-			if (line[0] != '#') {
-				g_strchomp(line);
-				words.insert(line);
-			}
-		}
-		fclose(file);
-		err = SKERR_SUCCESS;
-	}
-
-	return err;
-}
-
-/**
-* loadLocaleWords()
-* Loads a list of words from all locales (other than the current) that have spellings that
-* are specific to that locale. We use this list to prevent auto-correcting to those words.
-* This is necessary because it has a Global English LDB that often contains words from
-* multiple locales (but not with the correct frequency). More info at NOV-116715.
-*
-* @param localeSettings
-*   <perameter description>
-*
-* @return SmartKeyErrorCode
-*   <return value description>
-*/
-SmartKeyErrorCode SmkySpellCheckEngine::loadLocaleWords(const LocaleSettings& localeSettings)
-{
-	const std::string	localeDir = m_settings.readOnlyDataDir + "/smky/DefaultData/locale";
-	const char *		localeSuffix = "/locale-words";
-
-	std::string language = localeSettings.m_inputLanguage;
-	if (language.size() != 2)
-		return SKERR_FAILURE;
-
-	m_localeWords.clear();
-
-	SmartKeyErrorCode err = SKERR_FAILURE;
-
-	std::set<std::string> currentLocaleWords;
-	std::string currentLocalePath = localeSettings.findLocalResource(localeDir + '/', localeSuffix);
-	err = loadWords(currentLocalePath, currentLocaleWords);
-	if (err == SKERR_SUCCESS) {
-		g_debug("Loaded %u preferred words from %s", currentLocaleWords.size(), currentLocalePath.c_str());
-		DIR* dir = opendir(localeDir.c_str());
-		if (dir) {
-			const struct dirent* entry;
-			while ((entry=readdir(dir)) != NULL) {
-				if (entry->d_type == DT_DIR &&
-						strlen(entry->d_name) == 5 &&
-						entry->d_name[0] == language[0] && entry->d_name[1] == language[1] &&
-						currentLocalePath.compare(0, localeDir.length() + 6, localeDir + '/' + entry->d_name) != 0) {	// language matches
-
-					std::string fname = localeDir + "/" + entry->d_name + localeSuffix;
-					std::set<std::string> localeWords;
-					err = loadWords(fname, localeWords);
-					if (err == SKERR_SUCCESS) {
-						g_debug("Loaded %u biased words from %s", localeWords.size(), fname.c_str());
-						std::set<std::string>::const_iterator word;
-						for (word = localeWords.begin(); word != localeWords.end(); ++word) {
-							// If not in common with current locale's words
-							// Then put in list of other locale words.
-							if (currentLocaleWords.find(*word) == currentLocaleWords.end()) {
-								m_localeWords.insert(*word);
-							}
-						}
-					}
-				}
-			}
-
-			closedir(dir);
-		}
-		else {
-			g_warning("Can't open %s", localeDir.c_str());
-		}
-		g_debug("Loaded %u locale specific words to avoid for %s", m_localeWords.size(), localeSettings.getFullLocale().c_str());
-	}
-	else
-		g_debug("No locale specific words to avoid for %s", localeSettings.getFullLocale().c_str());
-
-
-	return err;
-}
-
-/**
-* loadWhitelist()
-* <here is function description>
-*
-* @param localeSettings
-*   <perameter description>
-*
-* @return SmartKeyErrorCode
-*   <return value description>
-*/
-SmartKeyErrorCode SmkySpellCheckEngine::loadWhitelist (const LocaleSettings& localeSettings)
-{
-	m_whitelist.clear();
-
-	// load missing language words for the current input language. Shared by all language variations, not encrypted.
-	// For things that were missing in our English dictionary, like "textfield" which had an "interesting" correction...
-	loadWords(m_settings.readOnlyDataDir + "/smky/DefaultData/whitelist/" + localeSettings.m_inputLanguage + "_whitelist-entries", m_whitelist);
-	if (m_whitelist.size() > 0)
-		g_debug("Loaded %u '%s' white list entries", m_whitelist.size(), localeSettings.m_inputLanguage.c_str());
-
-	SmartKeyErrorCode err = SKERR_FAILURE;
-	std::string fname = localeSettings.findLocalResource(m_settings.readOnlyDataDir + "/smky/DefaultData/whitelist/", "/whitelist-entries");
-	FILE* f = fopen(fname.c_str(),"r");
-	if (f) {
-		char linebuffer[128];
-		while (fgets(linebuffer, sizeof(linebuffer), f)) {
-			StringUtils::chomp(linebuffer, G_N_ELEMENTS(linebuffer));
-			std::string word(linebuffer);
-			if (!word.empty()) {
-				// Unsramble the word
-				for (size_t i = 0; i < word.length(); i++) {
-					word[i] = word[i]-1;
-				}
-				m_whitelist.insert(StringUtils::utf8tolower(word));
-				//g_debug("Learned from %s white list: %s", fname.c_str(), word.c_str());
-			}
-		}
-		err = SKERR_SUCCESS;
-	}
-
-	if (err == SKERR_SUCCESS)
-		g_debug("Loaded %u whitelist words", m_whitelist.size());
-	else
-		g_warning("ERROR %d loading whitelist words.", err);
-
-	return err;
-}
-
-}
-
 

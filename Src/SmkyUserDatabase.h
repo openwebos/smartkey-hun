@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -20,45 +21,179 @@
 #define SMK_USER_DATABASE_H
 
 #include <stdint.h>
-#include "SmkyMockImplementation.h"
-#include "SmkyDatabase.h"
+#include "Database.h"
+#include "SmkyFileKeywords.h"
+#include "Settings.h"
 
 namespace SmartKey
 {
-
-class Settings;
-
 /**
  * Wraps the reorder user database (RUDB).
  */
-class SmkyUserDatabase : public UserDatabase, public SmkyDatabase
+class SmkyUserDatabase
 {
+private:
+    // collect words added by user
+    SmkyFileKeywords m_user_database;
+
+    // collect words added by system (ex: contact names)
+    SmkyFileKeywords m_context_database;
+
 public:
-	SmkyUserDatabase(SMKY_LINFO& lingInfo, const Settings& settings);
-	virtual ~SmkyUserDatabase();
+    SmkyUserDatabase (void);
+    virtual ~SmkyUserDatabase (void);
 
-	SMKY_STATUS	init();
+    //init
+    virtual void init (void);
 
-	virtual SmartKeyErrorCode learnWord(const std::string& word);
-	virtual SmartKeyErrorCode forgetWord(const std::string& word);
-	virtual SmartKeyErrorCode getEntries(int offset, int limit, std::list<std::string>& entries);
-	virtual SmartKeyErrorCode getNumEntries(int& entries);
-            SmartKeyErrorCode findWord(const std::string& word) const;
-	virtual SmartKeyErrorCode save();
-	virtual SmartKeyErrorCode setLocaleSettings(const LocaleSettings& localeSettings);
-    virtual SmartKeyErrorCode updateWordUsage(const std::string& word);
+    //learn word
+    virtual void learnWord (const std::string& word);
 
-	static SmartKeyErrorCode smkyErrorToSmartKeyError(SMKY_STATUS err);
+    //learn context word
+    virtual void learnContextWord (const std::string& word);
+
+    //forget word
+    virtual bool forgetWord (const std::string& word);
+
+    //forget context word
+    virtual bool forgetContextWord (const std::string& word);
+
+    //get entries
+    virtual SmartKeyErrorCode getEntries (int offset, int limit, std::list<std::string>& entries);
+
+    //get number of the entries
+    virtual void getNumEntries (int& o_entries);
+
+    //find word
+    virtual bool findWord (const std::string& word);
+
+    //notification about locale settings change
+    virtual void changedLocaleSettings (void);
+
+    //save
+    virtual SmartKeyErrorCode save (void);
+
+    //not used at the moment
+    virtual SmartKeyErrorCode updateWordUsage (const std::string& word);
 
 private:
 
-	std::string getDbPath() const;
-	SmartKeyErrorCode loadEntries(std::list<std::string>& entries) const;
-	SMKY_STATUS	saveDb();
 
-	const Settings& m_settings;
-	uint8_t *     m_pDatabaseData;
+    //internal: get path to user dictionary
+    std::string       _getDbPath (void) const;
+
+    //internal: get path to context dictionary
+    std::string       _getContextDbPath (void) const;
+
+    //internal: get entries
+    SmartKeyErrorCode _loadEntries (std::list<std::string>& o_entries);
 };
+
+/**
+* get path to user dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyUserDatabase::_getDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_USER));
+}
+
+/**
+* get path to context dictionary
+*
+* @return string
+*   path
+*/
+inline std::string SmkyUserDatabase::_getContextDbPath (void) const
+{
+    return(Settings::getInstance()->getDBFilePath(Settings::DICT_USER_CONTEXT));
+}
+
+/**
+* save both user and context dictionaries
+*
+* @return SmartKeyErrorCode
+*   SKERR_SUCCESS if done
+*/
+inline SmartKeyErrorCode SmkyUserDatabase::save (void)
+{
+    return ( (m_user_database.save( _getDbPath() ) &&
+              m_context_database.save( _getContextDbPath() )) ? SKERR_SUCCESS : SKERR_FAILURE);
+}
+
+/**
+* See if a word exists in the user database.
+*
+* @param word
+*   word to find
+*
+* @return SmartKeyErrorCode
+*   true if the word is in the database. false if not (or on error).
+*/
+inline bool SmkyUserDatabase::findWord (const std::string& i_word)
+{
+    return ( m_user_database.find(i_word) || m_context_database.find(i_word));
+}
+
+/**
+* learn user word
+*
+* @param word
+*   word to add
+*/
+inline void SmkyUserDatabase::learnWord (const std::string& word)
+{
+    m_user_database.add(word);
+}
+
+/**
+* learn context word
+*
+* @param word
+*   word to add
+*/
+inline void SmkyUserDatabase::learnContextWord (const std::string& word)
+{
+    m_context_database.add(word);
+}
+
+/**
+* forget user word
+*
+* @param word
+*   word to forget
+*
+* @return SmartKeyErrorCode
+*   SKERR_SUCCESS if done
+*/
+inline bool SmkyUserDatabase::forgetWord (const std::string& word)
+{
+    return(m_user_database.remove(word));
+}
+
+/**
+* forget context word
+*
+* @param word
+*   SKERR_SUCCESS if done
+*/
+inline bool SmkyUserDatabase::forgetContextWord (const std::string& word)
+{
+    return(m_context_database.remove(word));
+}
+
+/**
+* get number of entries into user dictionary
+*
+* @param entries
+*   number of entries
+*/
+inline void SmkyUserDatabase::getNumEntries (int& o_entries)
+{
+    o_entries = m_user_database.size();
+}
 
 }
 

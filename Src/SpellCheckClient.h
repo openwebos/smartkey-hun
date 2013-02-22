@@ -1,6 +1,7 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2010-2013 Hewlett-Packard Development Company, L.P.
+*      Copyright (c) 2013 LG Electronics
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -32,45 +33,55 @@ namespace SmartKey
  */
 struct WordGuess
 {
-	WordGuess(const std::string& guess_) :
-		  guess(guess_)
-		, spellCorrection(false)
-		, autoReplace(false)
-		, autoAccept(false) {}
+    WordGuess() {};
 
-	std::string	guess;		///< The actual guess of the word.
-	bool spellCorrection;	///< Guess is a result of a spelling correction?
-	bool autoReplace;		///< Guess is a result of a auto-replace match?
-	bool autoAccept;		///< Engine is recommending that we auto accept this guess.
+    WordGuess(const std::string& guess_) :
+        guess(guess_)
+        , spellCorrection(false)
+        , autoReplace(false)
+        , autoAccept(false) {};
+
+    std::string	guess;      ///< The actual guess of the word.
+    bool spellCorrection;   ///< Guess is a result of a spelling correction?
+    bool autoReplace;       ///< Guess is a result of a auto-replace match?
+    bool autoAccept;        ///< Engine is recommending that we auto accept this guess.
 };
 
 /**
  * Contains the spell check information for a single word.
  */
-struct SpellCheckWordInfo {
-	SpellCheckWordInfo() : inDictionary(true) {}
-	bool isEmpty() const { return guesses.empty(); }
-	void clear() {
-		inDictionary = true;
-		guesses.clear();
-	}
+struct SpellCheckWordInfo
+{
+    SpellCheckWordInfo() : inDictionary(true) {}
+    bool isEmpty() const
+    {
+        return guesses.empty();
+    }
+    void clear()
+    {
+        inDictionary = true;
+        guesses.clear();
+    }
 
-	bool	inDictionary;	///< Was this word in any dictionary.
-	std::vector<WordGuess> guesses;	///< Collection of guesses (may be empty - even if mispelled.)
+    bool inDictionary;  ///< Was this word in any dictionary.
+    std::vector<WordGuess> guesses; ///< Collection of guesses (may be empty - even if mispelled.)
 };
 
 /**
  * Contains tap information.
  */
-struct TapData {
+struct TapData
+{
     TapData() : x(0), y(0), car(0), shifted(false) {}
 
-	unsigned int x;
-	unsigned int y;
-	unsigned int car;
-	bool shifted;
+    unsigned int x;
+    unsigned int y;
+    unsigned int car;
+    bool shifted;
 };
+
 class TapDataArray : public std::vector<TapData> {};
+
 
 /**
  * A simple class to communicate with the spell checking service for purposes of
@@ -79,46 +90,50 @@ class TapDataArray : public std::vector<TapData> {};
 class SpellCheckClient
 {
 public:
-	SpellCheckClient(GMainLoop* mainLoop);
-	~SpellCheckClient();
+    SpellCheckClient  (GMainLoop* mainLoop);
+    ~SpellCheckClient (void);
 
-	bool checkWordSpelling(const std::string& word, SpellCheckWordInfo& info);
-	bool processTaps(const TapDataArray& taps, SpellCheckWordInfo& info);
-	bool getCompletion(const std::string& prefix, std::string& result);
+    bool checkWordSpelling (const std::string& word, SpellCheckWordInfo& info);
+    bool processTaps (const TapDataArray& taps, SpellCheckWordInfo& info);
+    bool getCompletion (const std::string& prefix, std::string& result);
 
 private:
 
-	/*
-	 * A temp struct only to be used for our synchronous calls.
-	 * TODO: Replace with async implementation.
-	 */
-	struct LastCallResponse {
-		
-		LastCallResponse() : gotResponse(false) {
-		}
+    /*
+     * A temp struct only to be used for our synchronous calls.
+     * TODO: Replace with async implementation.
+     */
+    struct LastCallResponse
+    {
 
-		void clear() {
-			response.clear();
-			gotResponse = false;
-		}
-	
-		SpellCheckWordInfo response;
-		bool	gotResponse;
-	};
+        LastCallResponse (void) : gotResponse(false)
+        {
+        }
 
-	bool	registerWithServiceBus	();
-	bool	unregisterWithServiceBus();
-	static bool spellCheckResponse(LSHandle *sh, LSMessage *reply, void *ctx);
-	static bool getCompletionResponse(LSHandle *sg, LSMessage *reply, void *ctx);
+        void clear (void)
+        {
+            response.clear();
+            gotResponse = false;
+        }
 
-	LSHandle*         m_serviceClient;
-	bool              m_attachedToServiceBus;
-	LastCallResponse  m_lastCallResponse;
-	GMainLoop*        m_mainLoop;
-	GMainContext*     m_mainContext;
+        SpellCheckWordInfo response;
+        bool gotResponse;
+    };
+
+    bool        registerWithServiceBus (void);
+    bool        unregisterWithServiceBus (void);
+    static bool spellCheckResponse (LSHandle *sh, LSMessage *reply, void *ctx);
+    static bool getCompletionResponse (LSHandle *sg, LSMessage *reply, void *ctx);
+
+    LSHandle*         mp_serviceClient;
+    bool              m_attachedToServiceBus;
+    LastCallResponse  m_lastCallResponse;
+    GMainLoop*        mp_mainLoop;
+    GMainContext*     mp_mainContext;
 };
 
 
 }
 
 #endif
+
