@@ -32,7 +32,11 @@ using namespace SmartKey;
 SmkyHunspellDatabase::SmkyHunspellDatabase (void)
 {
     //m_initialized = false;
+#ifdef USE_HUNSPELL
     mp_dict_base = NULL;
+#else
+    m_initialized = false;
+#endif
 
     _loadDictionary();
 }
@@ -50,6 +54,7 @@ SmkyHunspellDatabase::~SmkyHunspellDatabase (void)
 */
 void SmkyHunspellDatabase::_clean (void)
 {
+#ifdef USE_HUNSPELL
     if (mp_dict_base)
     {
         g_debug("Hunspell: going to release current dictionary..");
@@ -57,7 +62,7 @@ void SmkyHunspellDatabase::_clean (void)
         mp_dict_base = NULL;
         g_debug("Hunspell: done, no dictionaries");
     }
-
+#endif
     m_initialized = false;
 }
 
@@ -80,10 +85,12 @@ void SmkyHunspellDatabase::_loadDictionary (void)
     if ( (g_file_test(aff_path.c_str(), G_FILE_TEST_EXISTS)) &&
             (g_file_test(dict_path.c_str(), G_FILE_TEST_EXISTS)) )
     {
+#ifdef USE_HUNSPELL
         g_debug("Hunspell: going to load dictionary for locale '%s'", locale.c_str());
 
         mp_dict_base = new Hunspell( aff_path.c_str(), dict_path.c_str(), NULL );
         m_initialized = mp_dict_base != NULL;
+#endif
 
         if (m_initialized)
         {
@@ -121,12 +128,14 @@ bool SmkyHunspellDatabase::findEntry (const std::string& word)
 {
     if (m_initialized)
     {
+#ifdef USE_HUNSPELL
         const char* p_search_word = word.c_str();
         int info;
 
         int res = mp_dict_base->spell( p_search_word, &info );
 
         return( res != 0 ); //is good word?
+#endif
     }
     else
         g_debug("Hunspell: dictionary is not loaded, find entry request ignored");
@@ -154,6 +163,7 @@ SmartKeyErrorCode SmkyHunspellDatabase::findGuesses (const std::string& word, Sp
 {
     if (m_initialized)
     {
+#ifdef USE_HUNSPELL
         int res;
         WordGuess word_guess;
         char** p_slst;
@@ -171,6 +181,7 @@ SmartKeyErrorCode SmkyHunspellDatabase::findGuesses (const std::string& word, Sp
 
             mp_dict_base->free_list( &p_slst, res );
         }
+#endif
     }
     else
         g_debug("Hunspell: dictionary is not loaded, spell check request ignored");

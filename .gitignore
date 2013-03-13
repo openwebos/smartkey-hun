@@ -28,5 +28,7 @@ debug-*/
 patches/
 use-this-smartkey-folder.sh
 run.sh
+/doc*
+Makefile*
 
 

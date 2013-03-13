@@ -1,4 +1,4 @@
-/* @@@LICENSE
+/*! @@@LICENSE
 *
 *      Copyright (c) 2009-2013 Hewlett-Packard Development Company, L.P.
 *      Copyright (c) 2013 LG Electronics
@@ -16,6 +16,13 @@
 * limitations under the License.
 *
 * LICENSE@@@ */
+/*!
+ *  \brief SmartKeyService
+ *  \copyright { Copyright (c) 2009-2013 Hewlett-Packard Development Company, L.P. ; Copyright (c) 2013 LG Electronics }
+ *  \author Hewlett-Packard Development Company
+ *  \version { 4.0.0 }
+ *  \date 2009 - 2013
+ */
 
 #ifndef SMARTKEY_SERVICE_H
 #define SMARTKEY_SERVICE_H

@@ -1,0 +1,14 @@
+{
+    "role": {
+        "exeName":"/usr/lib/luna/com.palm.smartkey",
+        "type": "regular",
+        "allowedNames": ["com.palm.smartKey",""]
+    },
+    "permissions": [
+        {
+            "service":"com.palm.smartKey",
+            "inbound":["*"],
+            "outbound":["*"]
+        }
+    ]
+}

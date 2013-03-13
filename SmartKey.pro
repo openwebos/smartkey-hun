@@ -1,6 +1,7 @@
 # @@@LICENSE
 #
 #      Copyright (c) 2010-2012 Hewlett-Packard Development Company, L.P.
+#      Copyright (c) 2013 LG Electronics
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,13 +25,16 @@ ENV_BUILD_TYPE = $$(BUILD_TYPE)
 !isEmpty(ENV_BUILD_TYPE) {
 	CONFIG -= release debug
 	CONFIG += $$ENV_BUILD_TYPE
+} else {
+    config += release
+    BUILD_TYPE = release
 }
 
 # Prevent conflict with usage of "signal" in other libraries
 CONFIG += no_keywords
 
 CONFIG += link_pkgconfig
-PKGCONFIG = glib-2.0 gthread-2.0
+PKGCONFIG = glib-2.0 gthread-2.0 pbnjson_cpp
 
 QT = core gui
 
@@ -58,23 +62,53 @@ DEFINES += SHIPPING_VERSION=0
 # See the QString documentation for more information
 # DEFINES += QT_USE_FAST_OPERATOR_PLUS
 
-SOURCES = Settings.cpp  SmartKeyService.cpp  SpellCheckClient.cpp  StringUtils.cpp  SmkyAutoSubDatabase.cpp  SmkyDatabase.cpp  SmkyManufacturerDatabase.cpp  SmkySpellCheckEngine.cpp  SmkyUserDatabase.cpp
+SOURCES = PerfTimer.cpp \
+        Settings.cpp \
+        SmartKeyService.cpp \
+        SmkyAutoSubDatabase.cpp \
+        SmkyFileKeywords.cpp \
+        SmkyFilePairs.cpp \
+        SmkyHunspellDatabase.cpp \
+        SmkyManufacturerDatabase.cpp \
+        SmkySpellCheckEngine.cpp \
+        SmkyUserDatabase.cpp \
+        SpellCheckClient.cpp \
+        StringUtils.cpp \
 
-HEADERS = Settings.h  SmartKeyService.h  SpellCheckClient.h  SpellCheckEngine.h  StringUtils.h  SmkyAutoSubDatabase.h  SmkyDatabase.h  SmkyManufacturerDatabase.h  SmkyMockImplementation.h  SmkySpellCheckEngine.h  SmkyUserDatabase.h
+HEADERS = Database.h \
+        PerfTimer.h \
+        Settings.h \
+        SmartKeyService.h \
+        SmkyAutoSubDatabase.h \
+        SmkyFileKeywords.h \
+        SmkyFilePairs.h \
+        SmkyHunspellDatabase.h \
+        SmkyKeywordsBundle.h \
+        SmkyManufacturerDatabase.h \
+        SmkyPairsBundle.h \
+        SmkySpellCheckEngine.h \
+        SmkyUserDatabase.h \
+        SpellCheckClient.h \
+        StringUtils.h \
 
 QMAKE_CXXFLAGS += -fno-rtti -fno-exceptions -Wall -Werror
 QMAKE_CXXFLAGS += -DFIX_FOR_QT
 
 # Override the default (-Wall -W) from g++.conf mkspec (see linux-g++.conf)
-QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-unused-variable -Wno-reorder -Wno-missing-field-initializers -Wno-extra
+QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-unused-variable -Wno-reorder -Wno-missing-field-initializers -Wno-extra -Wno-deprecated
 
-LIBS += -lcjson -lLunaSysMgrIpc -llunaservice -lpbnjson_cpp -lhunspell-1.3 \
+##LIBS += -lluna-service2 -lpbnjson_cpp -lhunspell-1.3
+LIBS += -lluna-service2 -lpbnjson_cpp -lcjson -licui18n -licuuc
 
 INCLUDEPATH += $$(LUNA_STAGING)/include
 
-linux-g++ {
+linux-g++ || linux-g++-64 {
+    MACHINE_NAME = x86
+    QMAKE_MAKEFILE = Makefile.Ubuntu
+    DEFINES += TARGET_DESKTOP
+} else {
+    MACHINE_NAME = $$(MACHINE)
 }
-
 linux-qemux86-g++ {
 	QMAKE_CXXFLAGS += -fno-strict-aliasing
 }
@@ -85,7 +119,7 @@ linux-armv7-g++ {
 linux-armv6-g++ {
 }
 
-DESTDIR = ./$$(BUILD_TYPE)-$$(PLATFORM)
+DESTDIR = ./$${BUILD_TYPE}-$${MACHINE_NAME}
 
 OBJECTS_DIR = $$DESTDIR/.obj
 MOC_DIR = $$DESTDIR/.moc

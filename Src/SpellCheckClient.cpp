@@ -33,6 +33,24 @@ const char* const k_pszCallSchema = "{\"type\" : \"object\", \
 									} \
 								}";
 
+const char* const k_pszTapCallSchema = "{ \
+                                     \"type\": \"object\", \
+                                     \"properties\": { \
+                                         \"taps\": { \
+                                             \"type\": \"array\", \
+                                             \"properties\": { \
+                                                 \"type\": \"object\", \
+                                                 \"properties\": { \
+                                                     \"x\": {\"type\": \"integer\"}, \
+                                                     \"y\": {\"type\": \"integer\"}, \
+                                                     \"page\": {\"type\": \"integer\"}, \
+                                                     \"shift\": {\"type\": \"boolean\"} \
+                                                 } \
+                                             } \
+                                         } \
+                                      } \
+                                  }";
+
 const char* const k_pszCompCallSchema = "{\"type\" : \"object\", \
 										\"properties\" : { \
 											\"prefix\" : {\"type\" : \"string\"} \
@@ -243,17 +261,19 @@ bool SpellCheckClient::processTaps (const TapDataArray& taps, SpellCheckWordInfo
         pbnjson::JValue tapData = pbnjson::Array();
         for (size_t i=0; i<taps.size(); i++)
         {
+            pbnjson::JValue t = pbnjson::Object();
+            t.put("x", (int)taps[i].x);
+            t.put("y", (int)taps[i].y);
+            t.put("page", (int)taps[i].car);
+            t.put("shift", taps[i].shifted);
 
-            tapData.append(taps[i].x);
-            tapData.append(taps[i].y);
-            tapData.append(taps[i].car);
-            tapData.append(taps[i].shifted);
+            tapData.append(t);
         }
         callData.put("taps", tapData);
 
         pbnjson::JGenerator serializer(NULL);
         std::string payload;
-        pbnjson::JSchema callSchema = pbnjson::JSchemaFragment("{}");	// we should have a schema, but do we really care?...
+        pbnjson::JSchema callSchema = pbnjson::JSchemaFragment(k_pszTapCallSchema);
 
         if (serializer.toString(callData, callSchema, payload))
         {
@@ -265,7 +285,7 @@ bool SpellCheckClient::processTaps (const TapDataArray& taps, SpellCheckWordInfo
                 g_debug("Waiting for response");
                 while (!m_lastCallResponse.gotResponse)
                 {
-                    g_main_context_iteration(mp_mainContext, true);
+                    g_main_context_iteration(mp_mainContext, true /*may block*/);
                     info = m_lastCallResponse.response;
                 }
                 success = true;
