@@ -23,7 +23,12 @@
 #include <string>
 #include "Database.h"
 #include "SpellCheckClient.h"
-#include <hunspell/hunspell.hxx>
+
+// #define USE_HUNSPELL
+
+#ifdef USE_HUNSPELL
+ #include <hunspell/hunspell.hxx>
+#endif
 
 namespace SmartKey
 {
@@ -36,8 +41,10 @@ private:
     //is engine was initialized and db loaded successfuly ?
     bool      m_initialized;
 
+#ifdef USE_HUNSPELL
     //hunspell object
     Hunspell* mp_dict_base;
+#endif
 
 public:
 
