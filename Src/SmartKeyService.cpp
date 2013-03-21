@@ -2865,7 +2865,9 @@ bool SmartKeyService::queryPreferencesCallback (LSHandle *sh, LSMessage *message
             // Haven't yet set the carrier db defaults (which can override the standard
             // default preferences).
             g_debug("Carrier db never consulted for defaults. Doing so now...");
-            service->addCarrierDbSettingsWatch();
+            #if !defined(TARGET_DESKTOP)
+                service->addCarrierDbSettingsWatch();
+            #endif
         }
     }
     else
