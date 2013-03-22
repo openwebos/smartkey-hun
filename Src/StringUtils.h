@@ -140,7 +140,7 @@ private:
         guint64 user_time = userTime - userTimeRef;
         guint64 wallTime = bootTime() - beginWallTime;
 //		if (sys_time + user_time > 20)
-        g_log(G_LOG_DOMAIN, logLevel, "%s%s: System: %Lums, User: %Lums, Total: %Lums, Wall time: %Lums.", step, message, sys_time, user_time, sys_time + user_time, wallTime);
+        g_log(G_LOG_DOMAIN, logLevel, "%s%s: System: %" G_GUINT64_FORMAT "ms, User: %" G_GUINT64_FORMAT "ms, Total: %" G_GUINT64_FORMAT "ms, Wall time: %" G_GUINT64_FORMAT "ms.", step, message, sys_time, user_time, sys_time + user_time, wallTime);
     }
 
     static guint64 bootTime()
