@@ -24,7 +24,7 @@
 #include "Database.h"
 #include "SpellCheckClient.h"
 
-// #define USE_HUNSPELL
+#define USE_HUNSPELL
 
 #ifdef USE_HUNSPELL
  #include <hunspell/hunspell.hxx>
