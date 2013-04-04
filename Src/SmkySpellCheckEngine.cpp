@@ -197,6 +197,9 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, 
 {
     result.clear();
 
+    //"spelledCorrectly" <== result.inDictionary
+    result.inDictionary = false;
+
     if ( !m_initialized )
         return SKERR_FAILURE;
 
@@ -217,17 +220,6 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, 
 
     //  c) Check word in auto sub dictionary.
     string auto_subdb_word = mp_autoSubDb->findEntry(word);
-    WordGuess word_guess;
-
-    if ( auto_subdb_word.length() > 0 )
-    {
-        // If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
-        word_guess.guess = auto_subdb_word;
-        word_guess.spellCorrection = false;
-        word_guess.autoReplace = true;
-        word_guess.autoAccept = true;
-        result.guesses.push_back(word_guess);
-    }
 
     //  d) If word is all digits, set result.inDictionary=true; and return success
     if (_wordIsAllDigits(word))
@@ -243,17 +235,29 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, 
         return SKERR_SUCCESS;
     }
 
+    if ( mp_hunspDb->findEntry(word) )
+    {
+        result.inDictionary = true;
+    }
+
     //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
     if ( mp_hunspDb->findGuesses(word, result, maxGuesses) == SKERR_SUCCESS)
     {
-        result.inDictionary = true;
         return SKERR_SUCCESS;
     }
 
     //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
     //      otherwise select best matching guess for autoaccept flag
-
-    //  [Igor: this is done already in section c) ]
+    if ( auto_subdb_word.length() > 0 )
+    {
+        WordGuess word_guess;
+        // If found: add to result.guesses: .spellCorrection=false; .autoReplace=true; .autoAccept=true;
+        word_guess.guess = auto_subdb_word;
+        word_guess.spellCorrection = false;
+        word_guess.autoReplace = true;
+        word_guess.autoAccept = true;
+        result.guesses.push_back(word_guess);
+    }
 
     //  h) Return valid error code
     return SKERR_SUCCESS;
@@ -280,6 +284,9 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, 
 SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect (const std::string& word, const std::string& context, SpellCheckWordInfo& result, int maxGuesses)
 {
     result.clear();
+
+    //"spelledCorrectly" <== result.inDictionary
+    result.inDictionary = false;
 
     //  a) If current languuage not supported in a loaded dictionary, set result.inDictionary=true; and return success
     if ( !_isCurrentLanguageSupported() )
@@ -323,17 +330,21 @@ SmartKeyErrorCode SmkySpellCheckEngine::autoCorrect (const std::string& word, co
         return SKERR_SUCCESS;
     }
 
+    if ( mp_hunspDb->findEntry(word) )
+    {
+        result.inDictionary = true;
+    }
+
     //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
     if ( mp_hunspDb->findGuesses(word, result, maxGuesses) == SKERR_SUCCESS)
     {
-        result.inDictionary = true;
         return SKERR_SUCCESS;
     }
 
     //  g) If word not found in dictionaries, but auto-sub had a match, set that to auto accept
     //      otherwise select best matching guess for autoaccept flag
 
-    //  [Igor: this is done already in section c) ]
+    //[Igor]: this is already done on the step c)
 
     //  h) Return valid error code
     return SKERR_SUCCESS;
