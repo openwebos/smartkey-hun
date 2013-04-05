@@ -61,6 +61,9 @@ public:
     //find
     virtual bool find (const std::string& shortcut);
 
+    //find by prefix
+    virtual std::string find_by_prefix (const std::string& prefix);
+
     //export all strings to external list
     virtual void exportToList (std::list<std::string>& o_entries);
 
@@ -115,6 +118,24 @@ inline bool SmkyKeywordsBundle::remove (std::string i_key)
 inline bool SmkyKeywordsBundle::find (const std::string& shortcut)
 {
     return(m_independent_dict.find(shortcut) || m_dependent_dict.find(shortcut));
+}
+
+/**
+* is word with specified prefix exist in bundle ?
+*
+* @param shortcut
+*   key word to search
+*
+* @return std::string
+*   word assotiated with prefix word
+*/
+inline std::string SmkyKeywordsBundle::find_by_prefix (const std::string& prefix)
+{
+    std::string retval = m_independent_dict.find_by_prefix(prefix);
+    if(retval.length() > 0)
+        return( retval );
+
+    return( m_dependent_dict.find_by_prefix(prefix) );
 }
 
 /**

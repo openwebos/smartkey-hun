@@ -170,6 +170,12 @@ bool SmkyFilePairs::save (std::string i_db_file)
 
 /**
 * add pair
+*
+* @param i_key
+*   key word to search
+*
+* @param i_value
+*   value word
 */
 void SmkyFilePairs::add (std::string i_key, std::string i_value)
 {
@@ -227,7 +233,40 @@ std::string SmkyFilePairs::find (const std::string& shortcut)
 }
 
 /**
+* is word with specified prefix exist in dictionary ?
+*
+* @param shortcut
+*   key word to search
+*
+* @return std::string
+*   word assotiated with prefix word
+*/
+std::string SmkyFilePairs::find_by_prefix (const std::string& prefix)
+{
+    if (!m_dictionary.empty())
+    {
+        SmkyHashMap::iterator it;
+        std::pair<std::string::const_iterator, std::string::const_iterator> res;
+
+        for (it = m_dictionary.begin(); it != m_dictionary.end(); ++it )
+        {
+            res = std::mismatch(prefix.begin(), prefix.end(), it->second.begin());
+
+            if (res.first == prefix.end())
+            {
+                return(it->second);
+            }
+        }
+    }
+
+    return "";
+}
+
+/**
 * export dictionary elements to list
+*
+* @param entries
+*   output: list of entries
 */
 void SmkyFilePairs::exportToList (std::list<Entry>& entries)
 {

@@ -80,6 +80,9 @@ public:
     //find
     virtual std::string find (const std::string& shortcut);
 
+    //find by prefix
+    virtual std::string find_by_prefix (const std::string& prefix);
+
     //export all pairs from the dictionary to list
     virtual void exportToList (std::list<Entry>& entries);
 

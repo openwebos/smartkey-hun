@@ -66,6 +66,9 @@ public:
     //find
     virtual std::string find (const std::string& shortcut);
 
+    //find by prefix
+    virtual std::string find_by_prefix (const std::string& prefix);
+
     //export
     virtual void exportToList (std::list<AutoSubDatabase::Entry>& o_entries);
 
@@ -79,10 +82,10 @@ protected:
 };
 
 /**
-* <here is function description>
+* get used locale
 *
 * @return string
-*   <return value description>
+*   locale
 */
 inline std::string SmkyPairsBundle::getUsedLocale (void)
 {
@@ -90,7 +93,7 @@ inline std::string SmkyPairsBundle::getUsedLocale (void)
 }
 
 /**
-* <here is function description>
+* load bundle
 */
 inline void SmkyPairsBundle::load (std::string i_independent_dict, std::string i_dependent_dict)
 {
@@ -102,7 +105,7 @@ inline void SmkyPairsBundle::load (std::string i_independent_dict, std::string i
 }
 
 /**
-* <here is function description>
+* save bundle
 *
 * @return bool
 *   <return value description>
@@ -116,7 +119,7 @@ inline bool SmkyPairsBundle::save (std::string i_dependent_dict)
 * size: number of pairs
 *
 * @return int
-*   <return value description>
+*   int: size of bundle
 */
 inline int SmkyPairsBundle::size (void)
 {
@@ -124,7 +127,13 @@ inline int SmkyPairsBundle::size (void)
 }
 
 /**
-* <here is function description>
+* add pair
+*
+* @param i_key
+*   key word to search
+*
+* @param i_value
+*   value word
 */
 inline void SmkyPairsBundle::add (std::string i_key, std::string i_value)
 {
@@ -132,7 +141,10 @@ inline void SmkyPairsBundle::add (std::string i_key, std::string i_value)
 }
 
 /**
-* <here is function description>
+* remove pair by key
+*
+* @return bool
+*   true if removed
 */
 inline bool SmkyPairsBundle::remove (std::string i_key)
 {
@@ -140,10 +152,13 @@ inline bool SmkyPairsBundle::remove (std::string i_key)
 }
 
 /**
-* <here is function description>
+* is word exist in bundle ?
 *
-* @return string
-*   <return value description>
+* @param shortcut
+*   key word to search
+*
+* @return std::string
+*   word assotiated with key word
 */
 inline std::string SmkyPairsBundle::find (const std::string& shortcut)
 {
@@ -155,7 +170,28 @@ inline std::string SmkyPairsBundle::find (const std::string& shortcut)
 }
 
 /**
-* <here is function description>
+* is word with specified prefix exist in bundle ?
+*
+* @param shortcut
+*   key word to search
+*
+* @return std::string
+*   word assotiated with prefix word
+*/
+inline std::string SmkyPairsBundle::find_by_prefix (const std::string& prefix)
+{
+    std::string retval = m_independent_dict.find_by_prefix(prefix);
+    if(retval.length() > 0)
+        return( retval );
+
+    return( m_dependent_dict.find_by_prefix(prefix) );
+}
+
+/**
+* export dictionary elements to list
+*
+* @param entries
+*   output: list of entries
 */
 inline void SmkyPairsBundle::exportToList (std::list<AutoSubDatabase::Entry>& o_entries)
 {

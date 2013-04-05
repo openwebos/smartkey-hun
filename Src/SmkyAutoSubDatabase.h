@@ -76,6 +76,9 @@ public:
     //find entry
     virtual std::string findEntry (const std::string& shortcut);
 
+    //find word by prefix
+    virtual std::string findWordByPrefix (const std::string& prefix);
+
     //get ldb substitution
     std::string getLdbSubstitution (std::string& shortcut);
 
@@ -159,6 +162,24 @@ inline std::string SmkyAutoSubDatabase::findEntry (const std::string& shortcut)
         return(m_autosub_hc_dictionary.find(shortcut));
 
     return( retval );
+}
+
+/**
+* See if word with prefix exists into database.
+*
+* @param word
+*   word to find
+*
+* @return string
+*   not empty if the word with prefix found into database.
+*/
+inline std::string SmkyAutoSubDatabase::findWordByPrefix (const std::string& prefix)
+{
+    std::string retval = m_autosub_dictionary.find_by_prefix(prefix);
+    if(retval.length() > 0)
+        return( retval );
+
+    return( m_autosub_hc_dictionary.find_by_prefix(prefix) );
 }
 
 /**

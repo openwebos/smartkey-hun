@@ -89,6 +89,9 @@ public:
     //find
     virtual bool find (const std::string& shortcut);
 
+    //find by prefix
+    virtual std::string find_by_prefix (const std::string& prefix);
+
     //export all strings from the dictionary to list
     virtual void exportToList (std::list<std::string>& o_entries);
 
