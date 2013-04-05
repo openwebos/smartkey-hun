@@ -467,16 +467,38 @@ SmartKeyErrorCode SmkySpellCheckEngine::getCompletion (const std::string& prefix
     }
 
     //  b) If there's a match in the auto sub database, use that
-    string auto_subdb_word = mp_autoSubDb->findEntry(prefix);
+    string auto_word = mp_autoSubDb->findWordByPrefix(prefix);
 
-    if ( auto_subdb_word.length() > 0 )
+    if ( auto_word.length() > 0 )
     {
-        result = auto_subdb_word;
+        result = auto_word;
     }
     else
     {
         //  c) Otherwise lookup the prefix (partially entered string) in the dictionaries to get an autocompletion match, if there is one
+        auto_word = mp_userDb->findWordByPrefix(prefix);
+        if (auto_word.length() > 0 )
+        {
+            result = auto_word;
+            return(SKERR_SUCCESS);
+        }
 
+        auto_word = mp_manDb->findWordByPrefix(prefix);
+        if (auto_word.length() > 0 )
+        {
+            result = auto_word;
+            return(SKERR_SUCCESS);
+        }
+
+        //  If word not found in dictionaries, get a list of guesses from dictionaries.
+        SpellCheckWordInfo info;
+        info.clear();
+
+        if ( mp_hunspDb->findGuesses(prefix, info, 1) == SKERR_SUCCESS)
+        {
+            result = info.guesses.at(0).guess;
+            return SKERR_SUCCESS;
+        }
     }
     //  d) Return valid error code
     return(SKERR_SUCCESS);

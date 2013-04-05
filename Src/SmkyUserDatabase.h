@@ -67,6 +67,9 @@ public:
     //find word
     virtual bool findWord (const std::string& word);
 
+    //find word by prefix
+    virtual std::string findWordByPrefix (const std::string& prefix);
+
     //notification about locale settings change
     virtual void changedLocaleSettings (void);
 
@@ -129,12 +132,30 @@ inline SmartKeyErrorCode SmkyUserDatabase::save (void)
 * @param word
 *   word to find
 *
-* @return SmartKeyErrorCode
+* @return bool
 *   true if the word is in the database. false if not (or on error).
 */
 inline bool SmkyUserDatabase::findWord (const std::string& i_word)
 {
     return ( m_user_database.find(i_word) || m_context_database.find(i_word));
+}
+
+/**
+* See if a word exists in the user database.
+*
+* @param word
+*   word to find
+*
+* @return string
+*   not empty if the word with prefix found into database.
+*/
+inline std::string SmkyUserDatabase::findWordByPrefix (const std::string& prefix)
+{
+    std::string retval = m_user_database.find_by_prefix(prefix);
+    if(retval.length() > 0)
+        return( retval );
+
+    return( m_context_database.find_by_prefix(prefix) );
 }
 
 /**

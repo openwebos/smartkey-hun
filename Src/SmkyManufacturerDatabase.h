@@ -50,6 +50,9 @@ public:
     //find
     virtual bool findEntry (const std::string& word);
 
+    //find word by prefix
+    virtual std::string findWordByPrefix (const std::string& prefix);
+
     //save dictionary
     virtual SmartKeyErrorCode save (void);
 
@@ -106,6 +109,20 @@ inline std::string SmkyManufacturerDatabase::_getDependDbPath (void) const
 inline bool SmkyManufacturerDatabase::findEntry (const std::string& word)
 {
     return(m_dictionary.find(word));
+}
+
+/**
+* See if word with prefix exists into database.
+*
+* @param word
+*   word to find
+*
+* @return string
+*   not empty if the word with prefix found into database.
+*/
+inline std::string SmkyManufacturerDatabase::findWordByPrefix (const std::string& prefix)
+{
+    return( m_dictionary.find_by_prefix(prefix) );
 }
 
 }

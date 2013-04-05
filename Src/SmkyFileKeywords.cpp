@@ -217,6 +217,37 @@ bool SmkyFileKeywords::find (const std::string& shortcut)
 }
 
 /**
+* is word with specified prefix exist in dictionary ?
+*
+* @param shortcut
+*   key word to search
+*
+* @return std::string
+*   word assotiated with prefix word
+*/
+
+std::string SmkyFileKeywords::find_by_prefix (const std::string& prefix)
+{
+    if (!m_dictionary.empty())
+    {
+        SmkyHashSet::iterator it;
+        std::pair<std::string::const_iterator, std::string::const_iterator> res;
+
+        for (it = m_dictionary.begin(); it != m_dictionary.end(); ++it )
+        {
+            res = std::mismatch(prefix.begin(), prefix.end(), (*it).begin());
+
+            if (res.first == prefix.end())
+            {
+                return(*it);
+            }
+        }
+    }
+
+    return "";
+}
+
+/**
 * export all words from the dictionary
 *
 * @param o_entries
