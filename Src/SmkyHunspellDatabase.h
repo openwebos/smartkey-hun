@@ -64,6 +64,9 @@ private:
     //load dictionary according to current locale settings
     void _loadDictionary (void);
 
+    //test word spelling
+    bool _isSpelledGood (const char* ip_word);
+
 };
 
 /**
