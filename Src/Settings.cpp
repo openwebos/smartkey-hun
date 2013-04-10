@@ -19,6 +19,7 @@
 
 #include <glib.h>
 #include "Settings.h"
+#include <algorithm>
 
 using namespace SmartKey;
 
@@ -277,7 +278,18 @@ Settings::Settings (void)
 }
 
 /**
-* find local resource: try to find existing path with specified prefix and suffix based on locale settings
+* Find local resource: try to find existing path with specified prefix and suffix based on locale settings
+*
+* The sequence of finding a Hunspell-dictionary should be:
+*   a) Check for the perfect fit, with language and country; example: "sv_FI" for Swedish (sv) language in Finland (FI)
+*   b) If that fails, check for the language by itself; example "sv" for Swedish (sv) language
+*   c) If that fails, check for the language with the country code from the language code; example "fr_FR" for French in France.
+*   d) If that fails, check for the language with the US country code; example "es_US" for US Spanish
+*
+* For other dictionaries:
+*   a) standard case: input language 'en', country 'us' -> 'en_us', or input language 'fr', country 'ca' -> 'fr_ca'
+    b) degenerate case: input language + country code "non-classic", try the country of language: input language 'fr',
+       country 'us' -> 'fr_us' failed, so try 'fr_fr' works with 'fr, 'de', 'it' and even 'es'...
 *
 * @param pathPrefix
 *   path prefix
@@ -290,19 +302,43 @@ Settings::Settings (void)
 */
 std::string Settings::_findLocalResource (const std::string& pathPrefix, const char * pathSuffix) const
 {
-    // standard case: input language 'en', country 'us' -> 'en_us', or input language 'fr', country 'ca' -> 'fr_ca'
-    std::string	path = pathPrefix + localeSettings.m_inputLanguage + '_' + localeSettings.m_deviceCountry + pathSuffix;
+    //standard case
+    std::string path = pathPrefix + localeSettings.m_inputLanguage + '_' + localeSettings.m_deviceCountry + pathSuffix;
     if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
         return path;
 
-    // degenerate case: input language + country code "non-classic", try the country of language: input language 'fr', country 'us' -> 'fr_us' failed, so try 'fr_fr'
-    // works with 'fr, 'de', 'it' and even 'es'...
+    //degenerate case
     path = pathPrefix + localeSettings.m_inputLanguage + '_' + localeSettings.m_inputLanguage + pathSuffix;
+    if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
+        return path;
+
+    //check with capitalized country
+    std::string capCountry = localeSettings.m_deviceCountry;
+    std::transform(capCountry.begin(), capCountry.end(), capCountry.begin(), ::toupper);
+
+    path = pathPrefix + localeSettings.m_inputLanguage + '_' + capCountry + pathSuffix;
+    if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
+        return path;
+
+    //file name can be represented by two letters:
+    path = pathPrefix + localeSettings.m_inputLanguage + pathSuffix;
+    if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
+        return path;
+
+    //check for the language with the country code from the language code
+    capCountry = localeSettings.m_inputLanguage;
+    std::transform(capCountry.begin(), capCountry.end(), capCountry.begin(), ::toupper);
+
+    path = pathPrefix + localeSettings.m_inputLanguage + '_' + capCountry + pathSuffix;
     if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
         return path;
 
     // we're desperate. Try 'us' as a country...
     path = pathPrefix + localeSettings.m_inputLanguage + "_us" + pathSuffix;
+    if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
+        return path;
+
+    path = pathPrefix + localeSettings.m_inputLanguage + "_US" + pathSuffix;
     if (g_file_test(path.c_str(), G_FILE_TEST_EXISTS))
         return path;
 
