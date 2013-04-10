@@ -138,7 +138,7 @@ bool SmkyHunspellDatabase::findEntry (const std::string& word)
 #endif
     }
     else
-        g_debug("Hunspell: dictionary is not loaded, find entry request ignored");
+        g_debug("Hunspell: dictionary is not loaded, 'find entry' request ignored");
 
     return false;
 }
@@ -176,7 +176,15 @@ SmartKeyErrorCode SmkyHunspellDatabase::findGuesses (const std::string& word, Sp
             for (int i = 0; i < std::min(res, maxGuesses); ++i)
             {
                 word_guess.guess = p_slst[i];
+                word_guess.spellCorrection = _isSpelledGood(p_slst[i]);
+
+                if ( i == 0) //suggest to auto replace a first word
+                {
+                    word_guess.autoAccept = true;
+                }
+
                 result.guesses.push_back(word_guess);
+                word_guess.autoAccept = false;
             }
 
             mp_dict_base->free_list( &p_slst, res );
@@ -189,5 +197,19 @@ SmartKeyErrorCode SmkyHunspellDatabase::findGuesses (const std::string& word, Sp
     return( m_initialized ? SKERR_SUCCESS : SKERR_FAILURE );
 }
 
+/**
+* test word spelling
+*
+* @param ip_word
+*   word to test
+*
+* @return bool
+*   true if OK
+*/
+bool SmkyHunspellDatabase::_isSpelledGood (const char* ip_word)
+{
+    int info;
+    return( mp_dict_base->spell( ip_word, &info ) != 0 ); //is good word?
+}
 
 

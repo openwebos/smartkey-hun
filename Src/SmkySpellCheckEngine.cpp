@@ -243,6 +243,14 @@ SmartKeyErrorCode SmkySpellCheckEngine::checkSpelling (const std::string& word, 
     //  f) If word not found in dictionaries, get a list of guesses from dictionaries.
     if ( mp_hunspDb->findGuesses(word, result, maxGuesses) == SKERR_SUCCESS)
     {
+        if (result.inDictionary) //entry was found, clear auto replace flag
+        {
+            if (result.guesses.size() > 0)
+            {
+                result.guesses.at(0).autoAccept = false;
+            }
+        }
+
         return SKERR_SUCCESS;
     }
 
