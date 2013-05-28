@@ -97,7 +97,7 @@ public:
         guint64 sys_time, user_time;
         if (takeTime(sys_time, user_time))
         {
-            traceTime("-- ", message, logLevel, sys_time, user_time, m_sys_timeLast, m_user_timeLast, m_wall_time);
+            //traceTime("-- ", message, logLevel, sys_time, user_time, m_sys_timeLast, m_user_timeLast, m_wall_time);
             m_sys_timeLast = sys_time;
             m_user_timeLast = user_time;
         }
@@ -117,9 +117,9 @@ public:
 
     ~PerfMonitor()
     {
-        guint64 sys_time, user_time;
-        if (m_text && takeTime(sys_time, user_time))
-            traceTime(">> ", m_text, m_logLevel, sys_time, user_time, m_sys_timeFirst, m_user_timeFirst, m_wall_time);
+        //guint64 sys_time, user_time;
+        //if (m_text && takeTime(sys_time, user_time))
+        //    traceTime(">> ", m_text, m_logLevel, sys_time, user_time, m_sys_timeFirst, m_user_timeFirst, m_wall_time);
     }
 private:
     inline bool takeTime(guint64 & sysTime, guint64 & userTime)
@@ -134,6 +134,7 @@ private:
         }
         return false;
     }
+/*
     static void traceTime(const char * step, const char * message, GLogLevelFlags logLevel, const guint64 & sysTime, const guint64 & userTime, const guint64 & sysTimeRef, const guint64 & userTimeRef, const guint64 & beginWallTime)
     {
         guint64 sys_time = sysTime - sysTimeRef;
@@ -142,7 +143,7 @@ private:
 //		if (sys_time + user_time > 20)
         g_log(G_LOG_DOMAIN, logLevel, "%s%s: System: %Lums, User: %Lums, Total: %Lums, Wall time: %Lums.", step, message, sys_time, user_time, sys_time + user_time, wallTime);
     }
-
+*/
     static guint64 bootTime()
     {
         struct timespec currTime;
