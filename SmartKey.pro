@@ -98,7 +98,7 @@ QMAKE_CXXFLAGS += -DFIX_FOR_QT
 QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-unused-variable -Wno-reorder -Wno-missing-field-initializers -Wno-extra -Wno-deprecated
 
 ##LIBS += -lluna-service2 -lpbnjson_cpp -lhunspell-1.3
-LIBS += -lluna-service2 -lpbnjson_cpp -lcjson -lhunspell-1.3 -licui18n -licuuc
+LIBS += -lluna-service2 -lpbnjson_cpp -lcjson -lhunspell-1.3 -licui18n -licuuc -L$$(LUNA_STAGING)/lib
 
 INCLUDEPATH += $$(LUNA_STAGING)/include
 
