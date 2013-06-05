@@ -492,10 +492,10 @@ void SmartKeyService::getAutoReplaceStats (const std::string& fname) const
     printf("Auto-accepted: %d (%g%%)\n", numAutoAccepted, percent(numAutoAccepted, numMisspelled));
     printf("Auto accepted (matching): %d (%g%%)\n", numMatchingAutoAccept, percent(numMatchingAutoAccept, numAutoAccepted));
     printf("Any matching guess: %d (%g%%)\n", numMatchingGuess[0], percent(numMatchingGuess[0], numMisspelled));
-    for (size_t i = 1; i < G_N_ELEMENTS(numMatchingGuess); i++)
-    {
-        printf("guess %lu matches: %d\n", i, numMatchingGuess[i]);
-    }
+    //for (size_t i = 1; i < G_N_ELEMENTS(numMatchingGuess); i++)
+    //{
+    //     printf("guess %lu matches: %d\n", i, numMatchingGuess[i]);
+    //}
     printf("Average number of guesses for word: %g\n", double(totalNumGuesses) / double(numMisspelled));
     printf("Num errors: %d\n", numErrors);
 }
