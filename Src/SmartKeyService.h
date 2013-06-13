@@ -1,7 +1,6 @@
 /*! @@@LICENSE
 *
-*      Copyright (c) 2009-2013 Hewlett-Packard Development Company, L.P.
-*      Copyright (c) 2013 LG Electronics
+*      Copyright (c) 2009-2013 LG Electronics, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,8 +17,8 @@
 * LICENSE@@@ */
 /*!
  *  \brief SmartKeyService
- *  \copyright { Copyright (c) 2009-2013 Hewlett-Packard Development Company, L.P. ; Copyright (c) 2013 LG Electronics }
- *  \author Hewlett-Packard Development Company
+ *  \copyright { Copyright (c) 2009-2013 LG Electronics, Inc. }
+ *  \author LG Electronics, Inc.
  *  \version { 4.0.0 }
  *  \date 2009 - 2013
  */
