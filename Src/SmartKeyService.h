@@ -35,6 +35,9 @@
 #include "SmkySpellCheckEngine.h"
 #include "StringUtils.h"
 
+#define SMK_MIN_GUESSES 10
+#define SMK_MAX_GUESSES 60
+
 namespace SmartKey
 {
 

@@ -856,12 +856,16 @@ search the candidate substitution word for the query word.
 	"query": string,
 	"context": string,
 	"quick": boolean
+	"extended" : boolean
+	"max": int
 }
 \endcode
 
 \param query The word to correct. Required.
 \param context The context word prior to the word to correct. Optional.
 \param quick If set as true, engine will use checkSpelling, which is much faster but not as smart as autoCorrect which use reginal information
+\param extended If set as true, engine will generate more suggestions in output (=60). Can be ommited.
+\param max Maximum number of words for output result, by default is 10. This parameter have priority over parameter 'extended'. Can be ommited.
 
 \subsection com_palm_smartKey_service_reply Reply:
 \code
@@ -893,7 +897,7 @@ search the candidate substitution word for the query word.
 \subsection com_palm_smartKey_service_examples Examples:
 \code
 
-luna-send -n 1 -f palm://com.palm.smartKey/search '{ "query": "oul", "context": "start", "quick": "false"}'
+luna-send -n 1 -f palm://com.palm.smartKey/search '{ "query": "oul", "context": "start", "quick": "false", "max": 10 }'
 {
     "spelledCorrectly": false,
     "guesses": [
@@ -925,7 +929,7 @@ luna-send -n 1 -f palm://com.palm.smartKey/search '{ "query": "oul", "context": 
 
 \endcode
 */
-bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
+bool SmartKeyService::cmdSearch (LSHandle* sh, LSMessage* message, void* ctx)
 {
     if (!message)
     {
@@ -956,12 +960,24 @@ bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
     {
         SpellCheckWordInfo	result;
 
-        const int maxGuesses = 5;
+        int maxGuesses = SMK_MIN_GUESSES;
 
         std::string context;
         json_object* contextValue = json_object_object_get(json, "context");
         if (ValidJsonObject(contextValue))
             context = json_object_get_string(contextValue);
+
+        json_object* extendedValue = json_object_object_get(json, "extended");
+        if( ValidJsonObject(extendedValue) && json_object_get_boolean(extendedValue) )
+        {
+            maxGuesses = SMK_MAX_GUESSES;
+        }
+
+        json_object* limitValue = json_object_object_get(json, "max");
+        if (ValidJsonObject(limitValue))
+        {
+            maxGuesses = json_object_get_int(limitValue);
+        }
 
         json_object* value = json_object_object_get(json, "query");
         if (ValidJsonObject(value))
@@ -987,6 +1003,7 @@ bool SmartKeyService::cmdSearch(LSHandle* sh, LSMessage* message, void* ctx)
                 std::string substitution;
                 if (autosubdatabase)
                     substitution = autosubdatabase->findEntry(query);
+
                 if (!substitution.empty())
                 {
                     result.inDictionary = true;
