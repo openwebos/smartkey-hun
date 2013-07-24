@@ -1068,59 +1068,67 @@ bool SmartKeyService::cmdSearch (LSHandle* sh, LSMessage* message, void* ctx)
             }
             else
             {
-                // Before we spell check let's first check to see if the query (with any punctuation)
-                // matches an auto-replace entry. If so we'll do that first. Else spell-check.
-                SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
-                std::string substitution;
-                if (autosubdatabase)
-                    substitution = autosubdatabase->findEntry(query);
-
-                if (!substitution.empty())
+                if (!isGoodWord(query))
                 {
-                    result.inDictionary = true;
-                    if (query != substitution)  	// Only happens for ASDB entries that differ only by case (i->I)
-                    {
-                        //g_debug("'%s' found in auto-sub db. Returning as valid.", query.c_str());
-                        result.guesses.push_back(WordGuess(query));	// First result is always input word.
-
-                        WordGuess guess(substitution);
-                        guess.autoReplace = true;
-                        guess.autoAccept = true;
-                        result.guesses.push_back(guess);
-                    }
+                    err = SKERR_BAD_WORD;
+                    result.inDictionary = false;
                 }
                 else
                 {
-                    std::string leadingChars, trailingChars;
-                    std::string strippedQuery = stripPunctuation(query, leadingChars, trailingChars);
-                    std::string strippedContext;
-                    if (context.length())
+                    // Before we spell check let's first check to see if the query (with any punctuation)
+                    // matches an auto-replace entry. If so we'll do that first. Else spell-check.
+                    SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
+                    std::string substitution;
+                    if (autosubdatabase)
+                        substitution = autosubdatabase->findEntry(query);
+
+                    if (!substitution.empty())
+                    {
+                        result.inDictionary = true;
+                        if (query != substitution)  	// Only happens for ASDB entries that differ only by case (i->I)
+                        {
+                            //g_debug("'%s' found in auto-sub db. Returning as valid.", query.c_str());
+                            result.guesses.push_back(WordGuess(query));	// First result is always input word.
+
+                            WordGuess guess(substitution);
+                            guess.autoReplace = true;
+                            guess.autoAccept = true;
+                            result.guesses.push_back(guess);
+                        }
+                    }
+                    else
                     {
                         std::string leadingChars, trailingChars;
-                        strippedContext = stripPunctuation(context, leadingChars, trailingChars);
-                    }
-
-#if USE_KEY_LOCALITY
-                    // "quick" will tell us if we should force the use of checkSpelling, which is much faster, but not as smart as autoCorrect which uses key regional information
-                    bool	useAutoCorrect = true;
-                    json_object * autorequest = json_object_object_get(json, "quick");
-                    if (autorequest && ValidJsonObject(autorequest) && json_object_get_boolean(autorequest))
-                        useAutoCorrect = false;
-
-                    if (useAutoCorrect)
-                        err = service->m_engine->autoCorrect(strippedQuery, strippedContext, result, maxGuesses);
-                    else
-                        err = service->m_engine->checkSpelling(strippedQuery, result, maxGuesses);
-#else
-                    err = service->m_engine->checkSpelling(strippedQuery, result, maxGuesses);
-#endif
-                    if (!leadingChars.empty() || !trailingChars.empty())
-                    {
-                        std::vector<WordGuess>::iterator gi;
-                        for (gi = result.guesses.begin(); gi != result.guesses.end(); ++gi)
+                        std::string strippedQuery = stripPunctuation(query, leadingChars, trailingChars);
+                        std::string strippedContext;
+                        if (context.length())
                         {
-                            // Add the same punctuation to the guess to match the query word.
-                            gi->guess = restorePunctuation(gi->guess, leadingChars, trailingChars);
+                            std::string leadingChars, trailingChars;
+                            strippedContext = stripPunctuation(context, leadingChars, trailingChars);
+                        }
+
+    #if USE_KEY_LOCALITY
+                        // "quick" will tell us if we should force the use of checkSpelling, which is much faster, but not as smart as autoCorrect which uses key regional information
+                        bool	useAutoCorrect = true;
+                        json_object * autorequest = json_object_object_get(json, "quick");
+                        if (autorequest && ValidJsonObject(autorequest) && json_object_get_boolean(autorequest))
+                            useAutoCorrect = false;
+
+                        if (useAutoCorrect)
+                            err = service->m_engine->autoCorrect(strippedQuery, strippedContext, result, maxGuesses);
+                        else
+                            err = service->m_engine->checkSpelling(strippedQuery, result, maxGuesses);
+    #else
+                        err = service->m_engine->checkSpelling(strippedQuery, result, maxGuesses);
+    #endif
+                        if (!leadingChars.empty() || !trailingChars.empty())
+                        {
+                            std::vector<WordGuess>::iterator gi;
+                            for (gi = result.guesses.begin(); gi != result.guesses.end(); ++gi)
+                            {
+                                // Add the same punctuation to the guess to match the query word.
+                                gi->guess = restorePunctuation(gi->guess, leadingChars, trailingChars);
+                            }
                         }
                     }
                 }
