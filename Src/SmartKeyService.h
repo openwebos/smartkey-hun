@@ -239,6 +239,15 @@ private:
     //is all word letters punctuation ?
     static bool wordIsAllPunctuation (const std::string& word);
 
+    //have word letters any punctuation ?
+    static bool wordHavePunctuation (const std::string& word);
+
+    //remove trailing spaces
+    static std::string rightTrim (std::string& word);
+
+    //validate string for alphabet symbols only
+    static bool isGoodWord (std::string& word);
+
     //parse name
     static bool parseName (struct json_object* objName, Name& name );
 

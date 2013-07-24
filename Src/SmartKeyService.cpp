@@ -695,6 +695,8 @@ static const char* getErrorString (SmartKeyErrorCode err)
         return "Word already exists";
     case SKERR_NO_MATCHING_WORDS:
         return "No matching words";
+    case SKERR_BAD_WORD:
+        return "Word is incorrect";
     default:
         return "<UNKNOWN>";
     }
@@ -741,7 +743,7 @@ bool SmartKeyService::wordIsUrl (const string& word)
 *   word to test
 *
 * @return bool
-*   true if at least one symbol is punctuation
+*   true if all symbols are punctuation
 */
 bool SmartKeyService::wordIsAllPunctuation (const std::string& word)
 {
@@ -753,6 +755,75 @@ bool SmartKeyService::wordIsAllPunctuation (const std::string& word)
     }
 
     return true;
+}
+
+/**
+* check if word contain punctuation symbols
+*
+* @param word
+*   word to test
+*
+* @return bool
+*   true if at least one symbol is punctuation
+*/
+bool SmartKeyService::wordHavePunctuation (const std::string& word)
+{
+    std::string::const_iterator i;
+    for (i = word.begin(); i != word.end(); ++i)
+    {
+        if (ispunct(*i))
+            return true;
+    }
+
+    return false;
+}
+
+/**
+* trim spaces at end of string
+*
+* @param word
+*   word to test
+*
+* @return string
+*   word without spaces at end
+*/
+std::string SmartKeyService::rightTrim (std::string& word)
+{
+    std::string str = word;
+    for (size_t i = str.length(); i > 0; --i)
+    {
+        if (str[i - 1] == ' ' || str[i - 1] == '\n' || str[i - 1] == '\t')
+        {
+            str.erase(i - 1, 1);
+            ++i;
+        }
+    }
+
+    return str;
+}
+
+/**
+* verify input word for not allowed: numbers, alphanumerics, white spaces and special characters.
+*
+* @param word
+*   word to test
+*
+* @return bool
+*   true if validation is ok
+*/
+bool SmartKeyService::isGoodWord (std::string& word)
+{
+    std::string str = rightTrim(word);
+
+    if ( (str.length() > 0) && !wordHavePunctuation(str) )
+    {
+        if( word.find_first_of("1234567890") == string::npos )
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -1671,8 +1742,15 @@ bool SmartKeyService::cmdAddAutoReplace(LSHandle* sh, LSMessage* message, void* 
             {
                 entry.substitution = json_object_get_string(value);
 
-                err = autosubdatabase->addEntry(entry);
-                autosubdatabase->save();
+                if (isGoodWord(entry.shortcut) && isGoodWord(entry.substitution))
+                {
+                    err = autosubdatabase->addEntry(entry);
+                    autosubdatabase->save();
+                }
+                else
+                {
+                    err = SKERR_BAD_WORD;
+                }
             }
             else
             {

@@ -48,6 +48,7 @@ enum SmartKeyErrorCode
     SKERR_BAD_PARAM = 6,        // Invalid parameter
     SKERR_WORD_EXISTS = 7,      // Word already exists
     SKERR_NO_MATCHING_WORDS = 8,// No matching words (like for delete, etc.)
+    SKERR_BAD_WORD = 9          // Word is incorrect
 };
 
 /**
