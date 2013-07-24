@@ -696,7 +696,7 @@ static const char* getErrorString (SmartKeyErrorCode err)
     case SKERR_NO_MATCHING_WORDS:
         return "No matching words";
     case SKERR_BAD_WORD:
-        return "Word is incorrect";
+        return "Input word is incorrect";
     default:
         return "<UNKNOWN>";
     }
@@ -1417,8 +1417,16 @@ bool SmartKeyService::cmdAddUserWord(LSHandle* sh, LSMessage* message, void* ctx
         word = json_object_get_string(value);
         word = StringUtils::utf8tolower(word);
 
-        service->m_engine->getUserDatabase()->learnWord(word);
-        err = SKERR_SUCCESS;
+        if (isGoodWord(word))
+        {
+            service->m_engine->getUserDatabase()->learnWord(word);
+            err = SKERR_SUCCESS;
+        }
+        else
+        {
+            err = SKERR_BAD_WORD;
+        }
+
     }
     else
     {
