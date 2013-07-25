@@ -827,6 +827,27 @@ bool SmartKeyService::isGoodWord (std::string& word)
 }
 
 /**
+* validate string for numeric symbols only.
+*
+* @param word
+*   word to test
+*
+* @return bool
+*   true if validation is ok
+*/
+bool SmartKeyService::isNumber (std::string& word)
+{
+    std::string::const_iterator i;
+    for (i = word.begin(); i != word.end(); ++i)
+    {
+        if (isdigit(*i) == 0)
+            return false;
+    }
+
+    return true;
+}
+
+/**
 * Strip the first and last characters (if they are punctuation) and return word
 * If they are not punctuation then '\0' is returned.
 *
@@ -2081,30 +2102,52 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
     SmartKeyErrorCode err = SKERR_FAILURE;
 
     std::list<Entry> entries;
-
+//###
     json_object* value = json_object_object_get(json, "offset");
     if (value)
     {
-        int offset = json_object_get_int(value);
+        std::string str_offset;
+        str_offset = json_object_get_string(value);
 
-        WhichEntries whichEntries = UserEntries;
-        value = json_object_object_get(json, "all");
-        if (ValidJsonObject(value) && json_object_get_boolean(value))
+        //test for digits
+        if (isNumber(str_offset))
         {
-            whichEntries = AllEntries;
-        }
+            int offset = atoi(str_offset.c_str());//json_object_get_int(value);
 
-        value = json_object_object_get(json, "limit");
-        if (value)
-        {
-            int limit = json_object_get_int(value);
-            SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
-            if (autosubdatabase)
-                err = autosubdatabase->getEntries(offset, limit, whichEntries, entries);
+            WhichEntries whichEntries = UserEntries;
+            value = json_object_object_get(json, "all");
+            if (ValidJsonObject(value) && json_object_get_boolean(value))
+            {
+                whichEntries = AllEntries;
+            }
+
+            value = json_object_object_get(json, "limit");
+            if (value)
+            {
+                std::string str_limit;
+                str_limit = json_object_get_string(value);
+
+                //test for digits
+                if (isNumber(str_limit))
+                {
+                    int limit = atoi(str_limit.c_str());//json_object_get_int(value);
+                    SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
+                    if (autosubdatabase)
+                        err = autosubdatabase->getEntries(offset, limit, whichEntries, entries);
+                }
+                else
+                {
+                    err = SKERR_BAD_PARAM;
+                }
+            }
+            else
+            {
+                err = SKERR_MISSING_PARAM;
+            }
         }
         else
         {
-            err = SKERR_MISSING_PARAM;
+            err = SKERR_BAD_PARAM;
         }
     }
     else

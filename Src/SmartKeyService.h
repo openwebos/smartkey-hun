@@ -248,6 +248,9 @@ private:
     //validate string for alphabet symbols only
     static bool isGoodWord (std::string& word);
 
+    //validate string for numeric symbols only
+    static bool isNumber (std::string& word);
+
     //parse name
     static bool parseName (struct json_object* objName, Name& name );
 
