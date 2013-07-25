@@ -1650,17 +1650,39 @@ bool SmartKeyService::cmdListUserWords(LSHandle* sh, LSMessage* message, void* c
     json_object* value = json_object_object_get(json, "offset");
     if (value)
     {
-        int offset = json_object_get_int(value);
+        std::string str_offset;
+        str_offset = json_object_get_string(value);
 
-        value = json_object_object_get(json, "limit");
-        if (value)
+        //test for digits
+        if (isNumber(str_offset))
         {
-            int limit = json_object_get_int(value);
-            err = service->m_engine->getUserDatabase()->getEntries(offset, limit, words);
+            int offset = atoi(str_offset.c_str());//json_object_get_int(value);
+
+            value = json_object_object_get(json, "limit");
+            if (value)
+            {
+                std::string str_limit;
+                str_limit = json_object_get_string(value);
+
+                //test for digits
+                if (isNumber(str_limit))
+                {
+                    int limit = atoi(str_limit.c_str());//json_object_get_int(value);
+                    err = service->m_engine->getUserDatabase()->getEntries(offset, limit, words);
+                }
+                else
+                {
+                    err = SKERR_BAD_PARAM;
+                }
+            }
+            else
+            {
+                err = SKERR_MISSING_PARAM;
+            }
         }
         else
         {
-            err = SKERR_MISSING_PARAM;
+            err = SKERR_BAD_PARAM;
         }
     }
     else
@@ -2102,7 +2124,7 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
     SmartKeyErrorCode err = SKERR_FAILURE;
 
     std::list<Entry> entries;
-//###
+
     json_object* value = json_object_object_get(json, "offset");
     if (value)
     {
