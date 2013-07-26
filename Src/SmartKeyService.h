@@ -251,6 +251,9 @@ private:
     //validate string for numeric symbols only
     static bool isNumber (std::string& word);
 
+    //validate string for boolean {true, false}
+    static bool isBoolean (std::string& word);
+
     //parse name
     static bool parseName (struct json_object* objName, Name& name );
 

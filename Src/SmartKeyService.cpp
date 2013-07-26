@@ -45,6 +45,7 @@
 #include <cjson/json.h>
 #include "SmartKeyService.h"
 #include "Settings.h"
+#include <boost/algorithm/string.hpp>
 
 #define USE_KEY_LOCALITY 1
 
@@ -845,6 +846,23 @@ bool SmartKeyService::isNumber (std::string& word)
     }
 
     return true;
+}
+
+/**
+* validate string for boolean {true, false}.
+*
+* @param word
+*   word to test
+*
+* @return bool
+*   true if validation is ok
+*/
+bool SmartKeyService::isBoolean (std::string& word)
+{
+    std::string str = word;
+    boost::algorithm::to_lower(str);
+
+    return ( (str.compare("true") == 0) || (str.compare("false") == 0) );
 }
 
 /**
@@ -2013,16 +2031,31 @@ bool SmartKeyService::cmdNumAutoReplace(LSHandle* sh, LSMessage* message, void* 
         return false;
     }
 
+    SmartKeyErrorCode err = SKERR_SUCCESS;
     WhichEntries whichEntries = UserEntries;
-    json_object* value = json_object_object_get(json, "all");
-    if (ValidJsonObject(value) && json_object_get_boolean(value))
-    {
-        whichEntries = AllEntries;
-    }
-
     int numEntries(0);
-    SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
-    SmartKeyErrorCode err = autosubdatabase ? autosubdatabase->getNumEntries(whichEntries, numEntries) : SKERR_SUCCESS;
+
+    json_object* value = json_object_object_get(json, "all");
+    if (ValidJsonObject(value))
+    {
+        std::string str = json_object_get_string(value);
+        if (isBoolean(str))
+        {
+            if (json_object_get_boolean(value))
+                whichEntries = AllEntries;
+
+            SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
+            err = autosubdatabase ? autosubdatabase->getNumEntries(whichEntries, numEntries) : SKERR_FAILURE;
+        }
+        else
+        {
+            err = SKERR_BAD_PARAM;
+        }
+    }
+    else
+    {
+        err = SKERR_MISSING_PARAM;
+    }
 
     json_object* replyJson = json_object_new_object();
 
