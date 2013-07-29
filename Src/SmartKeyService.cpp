@@ -1985,7 +1985,8 @@ Get the number of auto replace entries
 }
 \endcode
 
-\param all if true, set the entry category to AllEntries, otherwise use UserEntries
+\param all if true, set the entry category to AllEntries (user added pairs + predefined pairs),
+\param otherwise use UserEntries (user added pairs only).
 
 \subsection com_palm_smartKey_service_reply Reply:
 \code
@@ -2329,7 +2330,7 @@ bool SmartKeyService::cmdAddPerson(LSHandle* sh, LSMessage* message, void* ctx)
     {
         json_object* name = static_cast<json_object*>(array_list_get_idx(names, n));
 
-        Name	parsedName;
+        Name parsedName;
         if (parseName(name, parsedName))
         {
             for (std::vector<std::string>::const_iterator iter = parsedName.m_names.begin(); iter != parsedName.m_names.end(); ++iter)
@@ -2388,9 +2389,9 @@ Remove the person name array from spell engine database
 }
 \endcode
 
-\param familyName Required
-\param midlleName Required
-\param givenName Required
+\param familyName Optional
+\param midlleName Optional
+\param givenName Optional
 
 \subsection com_palm_smartKey_service_reply Reply:
 \code
@@ -2438,7 +2439,7 @@ bool SmartKeyService::cmdRemovePerson(LSHandle* sh, LSMessage* message, void* ct
         return false;
     }
 
-    SmartKeyErrorCode err(SKERR_FAILURE);
+    SmartKeyErrorCode err(SKERR_NO_MATCHING_WORDS);
     std::set<std::string> allNames;
 
     array_list* names = json_object_get_array(json);
@@ -2447,23 +2448,23 @@ bool SmartKeyService::cmdRemovePerson(LSHandle* sh, LSMessage* message, void* ct
     {
         json_object* name = static_cast<json_object*>(array_list_get_idx(names, n));
 
-        Name	parsedName;
+        Name parsedName;
         if (parseName(name, parsedName))
         {
             for (std::vector<std::string>::const_iterator iter = parsedName.m_names.begin(); iter != parsedName.m_names.end(); ++iter)
             {
                 if(db->forgetContextWord(*iter))
                 {
-                    db->save();
                     allNames.insert(*iter);
                     err = SKERR_SUCCESS;
                 }
-                else
-                {
-                    err = SKERR_NO_MATCHING_WORDS;
-                }
             }
         }
+    }
+
+    if (allNames.size())
+    {
+        db->save();
     }
 
     json_object* replyJson = json_object_new_object();
