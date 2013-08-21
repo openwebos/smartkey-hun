@@ -18,7 +18,7 @@
 
 description "Spell check Daemon"
 
-start on ls-hubd_public-ready
+start on stopped mount-readwrite
 stop on started start_update
 
 respawn
