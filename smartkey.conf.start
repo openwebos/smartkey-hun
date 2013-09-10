@@ -18,7 +18,7 @@
 
 description "Spell check Daemon"
 
-start on stopped mount-readwrite
+start on boot-phase2-complete
 stop on started start_update
 
 respawn
@@ -36,6 +36,4 @@ pre-start script
 	fi
 end script
 
-script
-	/usr/bin/com.palm.smartkey
-end script
+exec /usr/bin/com.palm.smartkey
