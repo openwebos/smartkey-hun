@@ -18,7 +18,7 @@
 
 description "Spell check Daemon"
 
-start on boot-phase2-complete
+start on minimal-boot-done
 stop on started start_update
 
 respawn
