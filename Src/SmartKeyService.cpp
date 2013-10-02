@@ -1991,12 +1991,8 @@ Get the number of auto replace entries
 \subsection com_palm_smartKey_service_syntax Syntax:
 \code
 {
-    "all": boolean
 }
 \endcode
-
-\param all if true, set the entry category to AllEntries (user added pairs + predefined pairs),
-\param otherwise use UserEntries (user added pairs only).
 
 \subsection com_palm_smartKey_service_reply Reply:
 \code
@@ -2014,7 +2010,7 @@ Get the number of auto replace entries
 
 \subsection com_palm_smartKey_service_examples Examples:
 \code
-luna-send -n 1 -f palm://com.palm.smartKey/numAutoReplace '{ "all":false}'
+luna-send -n 1 -f palm://com.palm.smartKey/numAutoReplace '{}'
 {
     "returnValue": true,
     "count": 1
@@ -2042,31 +2038,11 @@ bool SmartKeyService::cmdNumAutoReplace(LSHandle* sh, LSMessage* message, void* 
         return false;
     }
 
-    SmartKeyErrorCode err = SKERR_SUCCESS;
-    WhichEntries whichEntries = UserEntries;
+    SmartKeyErrorCode err = SKERR_FAILURE;
     int numEntries(0);
 
-    json_object* value = json_object_object_get(json, "all");
-    if (ValidJsonObject(value))
-    {
-        std::string str = json_object_get_string(value);
-        if (isBoolean(str))
-        {
-            if (json_object_get_boolean(value))
-                whichEntries = AllEntries;
-
-            SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
-            err = autosubdatabase ? autosubdatabase->getNumEntries(whichEntries, numEntries) : SKERR_FAILURE;
-        }
-        else
-        {
-            err = SKERR_BAD_PARAM;
-        }
-    }
-    else
-    {
-        err = SKERR_MISSING_PARAM;
-    }
+    SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
+    err = autosubdatabase ? autosubdatabase->getNumEntries(UserEntries, numEntries) : SKERR_FAILURE;
 
     json_object* replyJson = json_object_new_object();
 
@@ -2102,13 +2078,11 @@ List auto replace entries which cotains the entries from offset with size limita
 \code
 {
     "offset": int
-    "all": boolean
     "limit": int
 }
 \endcode
 
 \param offset the offset position of the entry
-\param all if true, set entry category to AllEnties, otherwise use UserEntries
 \param limit the size of the return array
 
 \subsection com_palm_smartKey_service_reply Reply:
@@ -2165,66 +2139,19 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
         return false;
     }
 
-    SmartKeyErrorCode err = SKERR_FAILURE;
+    SmartKeyErrorCode err = SKERR_SUCCESS;
 
     std::list<Entry> entries;
+    std::string str_offset;
+    std::string str_limit;
 
     json_object* value = json_object_object_get(json, "offset");
     if (value)
     {
-        std::string str_offset;
         str_offset = json_object_get_string(value);
 
         //test for digits
-        if (isNumber(str_offset))
-        {
-            int offset = atoi(str_offset.c_str());//json_object_get_int(value);
-
-            WhichEntries whichEntries = UserEntries;
-            value = json_object_object_get(json, "all");
-            if (ValidJsonObject(value) && json_object_get_boolean(value))
-            {
-                whichEntries = AllEntries;
-            }
-
-            value = json_object_object_get(json, "limit");
-            if (value)
-            {
-                std::string str_limit;
-                str_limit = json_object_get_string(value);
-
-                //test for digits
-                if (isNumber(str_limit))
-                {
-                    int limit = atoi(str_limit.c_str());//json_object_get_int(value);
-                    SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
-                    if (autosubdatabase)
-                    {
-                        int total;
-                        autosubdatabase->getNumEntries(whichEntries, total);
-
-                        if ( (offset < total) && ((offset + limit) <= total) )
-                        {
-                            err = autosubdatabase->getEntries(offset, limit, whichEntries, entries);
-                        }
-                        else
-                        {
-                            err = SKERR_BAD_PARAM;
-                        }
-                    }
-
-                }
-                else
-                {
-                    err = SKERR_BAD_PARAM;
-                }
-            }
-            else
-            {
-                err = SKERR_MISSING_PARAM;
-            }
-        }
-        else
+        if (!isNumber(str_offset))
         {
             err = SKERR_BAD_PARAM;
         }
@@ -2234,10 +2161,50 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
         err = SKERR_MISSING_PARAM;
     }
 
+    if (err == SKERR_SUCCESS)
+    {
+        value = json_object_object_get(json, "limit");
+        if (value)
+        {
+            str_limit = json_object_get_string(value);
+
+            //test for digits
+            if (!isNumber(str_limit))
+            {
+                err = SKERR_BAD_PARAM;
+            }
+        }
+        else
+        {
+            err = SKERR_MISSING_PARAM;
+        }
+    }
+
+    if (err == SKERR_SUCCESS)
+    {
+        SmkyAutoSubDatabase* autosubdatabase = service->m_engine->getAutoSubDatabase();
+        if (autosubdatabase)
+        {
+            int offset = atoi(str_offset.c_str());
+            int limit = atoi(str_limit.c_str());
+            int total;
+            autosubdatabase->getNumEntries(UserEntries, total);
+
+            if ( (offset < total) && ((offset + limit) <= total) )
+            {
+                err = autosubdatabase->getEntries(offset, limit, UserEntries, entries);
+            }
+            else
+            {
+                err = SKERR_BAD_PARAM;
+            }
+        }
+    }
+
     json_object* replyJson = json_object_new_object();
 
     setReplyResponse(replyJson, err);
-    if (err==SKERR_SUCCESS)
+    if (err == SKERR_SUCCESS)
     {
 
         json_object* entriesJson = json_object_new_array();
