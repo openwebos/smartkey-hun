@@ -1709,7 +1709,7 @@ bool SmartKeyService::cmdListUserWords(LSHandle* sh, LSMessage* message, void* c
         int total;
         service->m_engine->getUserDatabase()->getNumEntries(total);
 
-        if ( (offset < total) && ((offset + limit) <= total) )
+        if (offset <= total)
         {
             err = service->m_engine->getUserDatabase()->getEntries(offset, limit, words);
         }
@@ -2190,7 +2190,7 @@ bool SmartKeyService::cmdListAutoReplace(LSHandle* sh, LSMessage* message, void*
             int total;
             autosubdatabase->getNumEntries(UserEntries, total);
 
-            if ( (offset < total) && ((offset + limit) <= total) )
+            if (offset <= total)
             {
                 err = autosubdatabase->getEntries(offset, limit, UserEntries, entries);
             }
