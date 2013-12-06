@@ -496,7 +496,7 @@ void SmartKeyService::getAutoReplaceStats (const std::string& fname) const
     //{
     //     printf("guess %lu matches: %d\n", i, numMatchingGuess[i]);
     //}
-    printf("Average number of guesses for word: %g\n", double(totalNumGuesses) / double(numMisspelled));
+    //printf("Average number of guesses for word: %g\n", double(totalNumGuesses) / double(numMisspelled));
     printf("Num errors: %d\n", numErrors);
 }
 

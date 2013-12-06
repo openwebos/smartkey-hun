@@ -25,6 +25,8 @@
 */
 PerfTimer::PerfTimer()
 {
+    _start = .0;
+    _stop = .0;
 }
 
 /**
