@@ -47,6 +47,7 @@ using namespace SmartKey;
 * SmkySpellCheckEngine
 */
 SmkySpellCheckEngine::SmkySpellCheckEngine (void)
+	: m_supported_languages("")
 {
     mp_hunspDb = new SmkyHunspellDatabase();
     mp_autoSubDb = new SmkyAutoSubDatabase();
@@ -127,7 +128,7 @@ void SmkySpellCheckEngine::_clean (void)
 */
 const char*  SmkySpellCheckEngine::getSupportedLanguages()
 {
-    string retval = "{\"languages\":[";
+	std::string str_val("");
 
     list<std::string> entries;
     m_languages.exportToList(entries);
@@ -135,14 +136,14 @@ const char*  SmkySpellCheckEngine::getSupportedLanguages()
     for ( list<std::string>::iterator it = entries.begin(); it != entries.end(); ++it )
     {
         if(it != entries.begin())
-            retval += ",";
+            str_val += ",";
 
-        retval += "\"" + *it + "_un\"";
+        str_val += "\"" + *it + "_un\"";
     }
 
-    retval += "]}";
+    m_supported_languages = "{\"languages\":[" + str_val + "]}";
 
-    return (retval.c_str()); //"{\"languages\":[\"en_un\",\"es_un\",\"fr_un\",\"de_un\",\"it_un\"]}";
+    return (m_supported_languages.c_str()); //"{\"languages\":[\"en_un\",\"es_un\",\"fr_un\",\"de_un\",\"it_un\"]}";
 }
 
 /**

@@ -32,13 +32,18 @@ namespace SmartKey
  */
 struct WordGuess
 {
-    WordGuess() {};
+    WordGuess() :
+        guess("") { init(); };
 
     WordGuess(const std::string& guess_) :
-        guess(guess_)
-        , spellCorrection(false)
-        , autoReplace(false)
-        , autoAccept(false) {};
+        guess(guess_) { init(); };
+
+    void init (void)
+    {
+        spellCorrection = false;
+        autoReplace = false;
+        autoAccept = false;
+    }
 
     std::string	guess;      ///< The actual guess of the word.
     bool spellCorrection;   ///< Guess is a result of a spelling correction?

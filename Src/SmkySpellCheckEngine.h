@@ -72,6 +72,10 @@ private:
     //white list
     SmkyKeywordsBundle        m_white_dictionary;
 
+    //supported languages list
+    //string like '{"languages":["en_un","es_un","fr_un","de_un","it_un"]}'
+    std::string              m_supported_languages;
+
 public:
 
     SmkySpellCheckEngine(void);
