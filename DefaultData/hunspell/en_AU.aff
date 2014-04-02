@@ -1,9 +1,11 @@
-# Affix file for British English MySpell dictionary
-# Also suitable as basis for Commonwealth and European English.
-# Built from scratch for MySpell. Released under LGPL.
+# Affix file English (Australian) Dictionary for Mozilla
+# Copyright (C) 2006  Cameron Roy
+# Released under the GNU General Public License
+# Please see readme.txt and license.txt for further information.
 #
-# David Bartlett, Andrew Brown.
-# R 1.14, 15/12/02
+# Originally released under the LGPL by David Bartlett, Andrew Brown.
+#
+# R 1.15.1, 2006-10-23
 SET ISO8859-1
 TRY esiaÈnrtolcdugmphbyfvkw-'.zqjxSNRTLCGDMPHBEAUYOFIVKWˆ‚ÙZQJX≈ÁËÓÍ‡Ô¸‰Ò 
 REP 24
