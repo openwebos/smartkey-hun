@@ -73,11 +73,24 @@ SmkySpellCheckEngine::SmkySpellCheckEngine (void)
                             Settings::getInstance()->getDBFilePath(Settings::DICT_WHITE, Settings::DICT_LOCALE_DEPEND));
 
     //init list of supported languages (need to move it to configuration file!)
-    m_languages.add("en");
-    m_languages.add("es");
-    m_languages.add("fr");
+    m_languages.add("an");
+    m_languages.add("ar");
+    m_languages.add("da");
     m_languages.add("de");
-    m_languages.add("it");
+    m_languages.add("en");
+    m_languages.add("fr");
+    m_languages.add("gl");
+    m_languages.add("hu");
+    m_languages.add("kk");
+    m_languages.add("ko");
+    m_languages.add("ml");
+    m_languages.add("ru");
+    m_languages.add("sh");
+    m_languages.add("sr");
+    m_languages.add("sv");
+    m_languages.add("uk");
+    m_languages.add("uz");
+    m_languages.add("vi");
 }
 
 /**
